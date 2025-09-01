@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="5" failures="0" errors="0" time="4.268">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2025-09-01T05:20:15" time="2.344" tests="5">
+    <testcase classname=" initial UI is rendered as expected" name=" initial UI is rendered as expected" time="0.032">
+    </testcase>
+    <testcase classname=" button adds customer" name=" button adds customer" time="0.015">
+    </testcase>
+    <testcase classname=" button adds multiple customer" name=" button adds multiple customer" time="0.013">
+    </testcase>
+    <testcase classname=" after adding customer input has no value" name=" after adding customer input has no value" time="0.006">
+    </testcase>
+    <testcase classname=" no customer added on empty input" name=" no customer added on empty input" time="0.007">
+    </testcase>
+  </testsuite>
+</testsuites>

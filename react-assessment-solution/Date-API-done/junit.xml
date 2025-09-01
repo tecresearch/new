@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="1" failures="0" errors="0" time="14.383">
+  <testsuite name="DateAPI &lt;App /&gt;" errors="0" failures="0" skipped="0" timestamp="2025-09-01T07:23:11" time="10.29" tests="1">
+    <testcase classname="DateAPI &lt;App /&gt; check if button click splits and displays the date" name="DateAPI &lt;App /&gt; check if button click splits and displays the date" time="0.559">
+    </testcase>
+  </testsuite>
+</testsuites>
