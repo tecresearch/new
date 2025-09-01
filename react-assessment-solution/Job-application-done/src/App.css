@@ -1,0 +1,29 @@
+.App {
+  font-family: Arial, sans-serif;
+  max-width: 600px;
+}
+
+form {
+  gap: 10px;
+}
+
+input {
+  font-size: 1rem;
+}
+
+.ml-120 {
+  margin-left: 120px;
+}
+
+.ml-100 {
+  margin-left: 100px;
+}
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+}
+
+.mx-50 {
+  max-width: 50%;
+}
