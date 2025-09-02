@@ -11,3 +11,6 @@ public class ChallengeApplication {
     }
 
 }
+
+
+//mvn clean verify sonar:sonar -Dsonar.projectKey=request-validator -Dsonar.projectName='request-validator' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=sqp_e3aafa54b4bc2c29ea776a4401e7e58e36cdda65
