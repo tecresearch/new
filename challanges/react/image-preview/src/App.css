@@ -1,0 +1,9 @@
+.empty {
+  width: 300px;
+  height: 200px;
+  background: rgb(87, 82, 82);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
