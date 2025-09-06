@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="4" failures="1" errors="0" time="9.398">
+  <testsuite name="undefined" errors="0" failures="1" skipped="0" timestamp="2025-09-05T14:25:11" time="5.721" tests="4">
+    <testcase classname=" Test Initial Loading of the App" name=" Test Initial Loading of the App" time="0.057">
+    </testcase>
+    <testcase classname=" Alert when invalid pokemon id" name=" Alert when invalid pokemon id" time="0.021">
+    </testcase>
+    <testcase classname=" Test getting pokemon details" name=" Test getting pokemon details" time="0.232">
+    </testcase>
+    <testcase classname=" Test getting next evolution" name=" Test getting next evolution" time="1.186">
+      <failure>Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Bulbasaur
+Received:
+  Venusaur
+
+Ignored nodes: comments, script, style
+&lt;html&gt;
+  &lt;head /&gt;
+  &lt;body&gt;
+    &lt;div&gt;
+      &lt;div
+        class=&quot;App&quot;
+      &gt;
+        &lt;h8k-navbar
+          header=&quot;Pokemon Details&quot;
+        /&gt;
+        &lt;div
+          class=&quot;mt-50 layout-column justify-content-center align-items-center&quot;
+        &gt;
+          &lt;div
+            class=&quot;card outlined px-50 py-30&quot;
+            style=&quot;width: 900px;&quot;
+          &gt;
+            &lt;div
+              class=&quot;card-header&quot;
+            &gt;
+              &lt;h4
+                class=&quot;card-title&quot;
+              &gt;
+                Pokemon Details
+              &lt;/h4&gt;
+            &lt;/div&gt;
+            &lt;div
+              class=&quot;card-body&quot;
+            &gt;
+              &lt;div&gt;
+                &lt;p&gt;
+                  &lt;strong&gt;
+                    ID: 
+                  &lt;/strong&gt;
+                  &lt;span
+                    data-testid=&quot;pokemon-id&quot;
+                  &gt;
+                    3
+                  &lt;/span&gt;
+                &lt;/p&gt;
+                &lt;p&gt;
+                  &lt;strong&gt;
+                    Name: 
+                  &lt;/strong&gt;
+                  &lt;span
+                    data-testid=&quot;pokemon-name&quot;
+                  &gt;
+                    Venusaur
+                  &lt;/span&gt;
+                &lt;/p&gt;
+                &lt;p&gt;
+                  &lt;strong&gt;
+                    Type: 
+                  &lt;/strong&gt;
+                &lt;/p&gt;
+                &lt;ul
+                  data-testid=&quot;pokemon-types&quot;
+                &gt;
+                  &lt;li
+                    data-testid=&quot;pokemon-type-Grass&quot;
+                  &gt;
+                    Grass
+                  &lt;/li&gt;
+                  &lt;li
+                    data-testid=&quot;pokemon-type-Poison&quot;
+                  &gt;
+                    Poison
+                  &lt;/li&gt;
+                &lt;/ul&gt;
+                &lt;p&gt;
+                  &lt;strong&gt;
+                    Height: 
+                  &lt;/strong&gt;
+                  &lt;span
+                    data-testid=&quot;pokemon-height&quot;
+                  &gt;
+                    2.01 m
+                  &lt;/span&gt;
+                &lt;/p&gt;
+                &lt;p&gt;
+                  &lt;strong&gt;
+                    Weight: 
+                  &lt;/strong&gt;
+                  &lt;span
+                    data-testid=&quot;pokemon-weight&quot;
+                  &gt;
+                    100.0 kg
+                  &lt;/span&gt;
+                &lt;/p&gt;
+                &lt;p&gt;
+                  &lt;strong&gt;
+                    Weaknesses: 
+                  &lt;/strong&gt;
+                &lt;/p&gt;
+                &lt;ol&gt;
+                  &lt;li&gt;
+                    Fire
+                  &lt;/li&gt;
+                  &lt;li&gt;
+                    Ice
+                  &lt;/li&gt;
+                  &lt;li&gt;
+                    Flying
+                  &lt;/li&gt;
+                  &lt;li&gt;
+                    Psychic
+                  &lt;/li&gt;
+                &lt;/ol&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;p&gt;
+            &lt;button
+              data-testid=&quot;pokemon-prev&quot;
+              disabled=&quot;&quot;
+            &gt;
+              Previous Evolution
+            &lt;/button&gt;
+            &lt;button
+              data-testid=&quot;pokemon-next&quot;
+              disabled=&quot;&quot;
+            &gt;
+              Next Evolution
+            &lt;/button&gt;
+          &lt;/p&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+    at C:\Brijesh-Software-Development\hacker-rank-assessment\challanges\react\PokemonDetailsFetch\src\App.test.js:93:41
+    at runWithExpensiveErrorDiagnosticsDisabled (C:\Brijesh-Software-Development\hacker-rank-assessment\challanges\react\PokemonDetailsFetch\node_modules\@testing-library\dom\dist\config.js:47:12)
+    at checkCallback (C:\Brijesh-Software-Development\hacker-rank-assessment\challanges\react\PokemonDetailsFetch\node_modules\@testing-library\dom\dist\wait-for.js:124:77)
+    at checkRealTimersCallback (C:\Brijesh-Software-Development\hacker-rank-assessment\challanges\react\PokemonDetailsFetch\node_modules\@testing-library\dom\dist\wait-for.js:118:16)
+    at Timeout.task [as _onTimeout] (C:\Brijesh-Software-Development\hacker-rank-assessment\challanges\react\PokemonDetailsFetch\node_modules\jsdom\lib\jsdom\browser\Window.js:516:19)
+    at listOnTimeout (node:internal/timers:608:17)
+    at processTimers (node:internal/timers:543:7)</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
