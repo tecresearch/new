@@ -1,0 +1,784 @@
+--Q1
+ 
+ 
+select t.user_id as user_id, count(*) as failed_transactions,
+
+count(distinct payment_method) as distinct_payment_methods
+
+from transactions t 
+
+group by t.user_id
+
+having failed_transactions>5;
+ 
+ 
+ 
+--Q2
+ 
+select 
+
+round(avg(timestampdiff(hour, 
+
+str_to_date(s.created_at,'%Y-%m-%d %H:%i:%s'),
+
+str_to_date(s.resolved_at,'%Y-%m-%d %H:%i:%s'))),2) as average_response_time
+
+from support_tickets s 
+
+where resolved_at != 'NULL';
+ 
+ 
+ 
+--Q3 ......................................................................................................
+ 
+ 
+select customer_id, name,
+
+city,total_spending
+ 
+from
+ 
+  (
+
+    select t.id as customer_id , t.name  as name,
+
+    t.city  as city , t.total_spending,
+
+    dense_rank() over (partition by t.city order by t.total_spending desc) as rnk
+ 
+    from
+ 
+        (
+
+           select c.id, c.name,
+
+           c.city, floor(sum(o.amount)) as total_spending
+
+           from customers c 
+
+           join orders o on c.id = o.customer_id
+
+           group by c.id, c.name, c.city
+
+        ) t
+ 
+  ) ranked
+ 
+where rnk = 1;
+ 
+ 
+ 
+--Q4
+ 
+SELECT p.name as product_name, count(*) as total_requests
+
+FROM  products p
+
+join requests r
+
+on p.id = r.product_id
+
+where p.is_available = 1
+
+group by p.id,p.name
+
+order by total_requests desc,p.name asc;
+ 
+ 
+--Q5
+ 
+SELECT c.name as campaign_name, count(*) as total_engagements, sum(e.views + e.clicks) as total_views_and_clicks
+
+FROM campaigns c 
+
+join engagements e
+
+on c.id = e.campaign_id
+
+where c.is_active = 1
+
+group by c.id,c.name 
+
+order by c.name asc;
+ 
+ 
+--Q6
+ 
+SELECT
+ 
+    a.email,
+ 
+    ROUND(SUM(r.amount), 2) AS total_report_amount
+ 
+FROM accounts a
+ 
+JOIN reports r ON a.id = r.account_id
+ 
+WHERE r.dt LIKE '2023%'   -- year(r.dt) = 2023
+ 
+GROUP BY a.email
+ 
+ORDER BY a.email ASC;
+ 
+ 
+--Q7
+ 
+SELECT d.mac_address, count(*) as total__files_scanned, sum(case when s.is_infected = 1 then 1 else 0 end)  as total__infected_files 
+
+FROM devices d
+
+join scanned_files s
+
+on d.id = s.device_id
+
+group by d.mac_address
+
+order by d.mac_address asc;
+ 
+ 
+--Q8
+ 
+select c.name as coin_name,
+
+round(sum(t.amount),2) as total_transaction_amount, 
+
+count(*) as total_transactions
+
+FROM coins c
+
+join transactions t 
+
+on c.id = t.coin_id
+
+where t.dt like '2023%'   -- year(t.dt) = 2023
+
+group by  c.id,c.name
+
+order by  c.name asc;
+ 
+ 
+ 
+--Q9
+ 
+select email , count(*) as total_domains
+
+from customers c 
+
+join domains d 
+
+on c.id = d.customer_id
+
+group by c.email
+
+order by c.email;
+ 
+ 
+--Q10
+ 
+SELECT
+
+    p.name AS product_name, 
+
+    p.price, 
+
+    COUNT(w.product_id) AS total_wishlist_count
+
+FROM products p
+
+JOIN wishlists w ON p.id = w.product_id
+
+WHERE p.in_stock = 1
+
+GROUP BY p.id, p.name, p.price
+
+ORDER BY p.name asc;
+ 
+ 
+--Q11
+ 
+select 
+
+c.name as campaign_name , 
+
+sum(e.emails_sent) as total_emails_sent ,
+
+sum(e.emails_opened) as total_emails_opened ,
+
+(sum(e.emails_sent) - sum(e.emails_opened)) as total_emails_not_opened
+
+from campaigns c
+
+join email_stats e
+
+on c.id = e.campaign_id
+
+group by c.id, c.name
+
+order by c.name;
+ 
+ 
+--Q12
+ 
+ 
+select  l.name as lot_name ,
+
+max(o.amount) as highest_offer,
+
+count(o.amount) as total_offers
+
+from lots l
+
+join offers o
+
+on l.id = o.lot_id
+
+group by l.name,l.id
+
+order by l.name asc;
+
+ 
+ 
+--Q13........................................................................
+ 
+select a.iban as IBAN, 
+
+round(min(t.amount),2) as min_transaction,
+
+round(max(t.amount),2) as max_transaction,
+
+round(avg(t.amount),2) as avg_transaction,
+
+count(*) as total_transactions
+
+from accounts a
+
+join transactions t
+
+on a.id = t.account_id
+
+where t.dt like '2022-09%'    -- t.dt >= '2022-09-01' and t.dt < '2022-10-01'
+
+group by a.iban
+
+order by a.iban asc;
+ 
+ 
+--Q14
+ 
+ 
+select p.name , p.price , count(w.customer_email) as total_wishes
+
+from products p
+
+join wishlists w
+
+on p.id = w.product_id 
+
+where p.in_stock  = 1
+
+group by p.name , p.price,p.id
+
+order by count(w.customer_email) desc, p.name asc
+
+limit 3;
+
+ 
+ 
+--Q15
+ 
+ 
+  select c.email as email,
+
+       count(p.amount) as total_purchases,
+
+       round(sum(p.amount),2) as total_purchase_amount
+
+  from customers c
+
+  join purchases p
+
+  on c.id = p.customer_id
+
+  where p.dt like '2024-03%' -- ise krte hue yaad rkhna ki >= aur < bhi use kr skte ho
+
+  group by c.email
+
+  order by c.email asc;
+ 
+ 
+--Q16
+ 
+select ac.email , date(ap.dt) as scheduled_appointment ,
+
+timestampdiff(day, date(str_to_date((ap.dt)), '2024-04-10') as days_of_delay
+
+from applicants ac
+
+join appointments ap
+
+on ac.id  =  ap.applicant_id
+
+where ap.is_received = 0 and date(ap.dt) < '2024-04-10'
+
+order by date(ap.dt) asc, ac.email asc;
+ 
+ 
+--Q17
+ 
+select a.email , dayname(ap.dt) as schedules_appointment
+
+from applicants a
+
+join appointments ap 
+
+on a.id = ap.applicant_id
+
+where dayofweek(ap.dt) in (1,7)
+
+order by a.email asc;
+ 
+ 
+--Q18
+ 
+ 
+select c.name as country_name, count(*) as total_domains 
+
+from countries c
+
+join domains d
+
+on  c.id = d.country_id 
+
+where d.is_active = 1
+
+group by c.name , c.id
+
+order by c.name asc;
+ 
+ 
+--Q19
+ 
+ 
+select d.name , date('2024-04-10') as today_date , date(d.next_renewal_date) as next_renewal_date, 
+
+timestampdiff(day,date('2024-04-10'),  d.next_renewal_date  ) as days_until_renewal
+
+from domains d
+
+order by  timestampdiff(day,date('2024-04-10'),  d.next_renewal_date  ) asc,
+
+d.name asc;
+
+ 
+--Q30
+ 
+ 
+with exp as(
+
+     select customer_id , sum(amount) as total_expenses
+
+     from expenses
+
+     where dt like '2024-03%'
+
+     group by customer_id
+
+),
+
+inc as (
+
+     select customer_id , sum(amount) as total_income
+
+     from income 
+
+     where dt like '2024-03%'
+
+     group by customer_id
+
+)
+ 
+select c.email, coalesce(exp.total_expenses,0) as total_expenses,
+
+coalesce(inc.total_income,0) as total_income
+
+from customers c
+
+left join exp
+
+on c.id = exp.customer_id
+
+left join inc 
+
+on c.id = inc.customer_id
+
+order by c.email asc;
+ 
+ 
+ 
+--Q31
+ 
+ 
+with exp as (
+
+      select customer_id , sum(amount) as total_expenses
+
+      from expenses
+
+      group by customer_id
+
+),
+
+    inc as  (
+
+
+      select customer_id , sum(amount) as total_income
+
+      from income
+
+      group by customer_id
+
+      ) 
+
+
+select c.email , coalesce(inc.total_income,0) -coalesce(exp.total_expenses,0) as balance
+
+from customers c
+
+left join exp on c.id = exp.customer_id
+
+left join inc on c.id = inc.customer_id
+
+where balance < 0
+
+order by c.email asc;
+ 
+ 
+--Q32
+ 
+ 
+select p.name, monthname(s.dt) as month , sum(s.amount) as total_sales
+
+from products p
+
+join sales s 
+
+on p.id = s.product_id 
+
+where month(s.dt) >= '2024-01-01' and s.dt < '2024-04-01'
+
+group by p.name, monthname(s.dt), month(s.dt)
+
+order by month(s.dt) asc , total_sales desc;
+ 
+ 
+ 
+--Q33
+ 
+select p.name as project_name, count(pe.employee_id) as employee_count,
+
+ceil(avg(e.experience_years)) as avg_experience_years,
+
+case when count(pe.employee_id) < 5 then 'Yes' else 'No' end as is_understaffed
+
+from projects p 
+
+join projects_employees pe on p.id =  pe.project_id
+
+join employees e on e.id = pe.employee_id
+ 
+group by p.name
+
+having avg(e.experience_years)>2
+
+order by  count(pe.employee_id) desc, p.name asc;
+ 
+ 
+--Q34 ..
+ 
+ 
+select t.wallet , count(t.amount) as total_transactions , 
+
+sum(case when t.amount>0 then t.amount else 0 end) as total_bought,
+
+abs(sum(case when t.amount<0 then t.amount else 0 end)) as total_sold
+
+from transactions t
+
+where t.dt like '2024-02%'
+
+group by t.wallet
+
+order by t.wallet asc;
+ 
+ 
+--Q35
+ 
+select e.email, coalesce(sum(lr.days_taken),0) as leave_days_taken ,
+
+case when sum(lr.days_taken)<=20 then 'Within Limit' else 'Exceeded' end as leave_status
+
+from employees e 
+
+left join leave_records lr 
+
+on e.id = lr.employee_id and lr.leave_dt like '2023%'
+
+group by e.email
+
+order by e.email asc;
+ 
+ 
+--Q36
+ 
+select c.name, sum(e.emails_sent) as total_emails_sent,
+
+sum(e.emails_opened) as total_emails_opened,
+
+round((sum(e.emails_opened)/sum(e.emails_sent))*100,2) as open_rate
+ 
+from campaigns c 
+
+join email_stats e 
+
+on c.id = e.campaign_id
+
+group by c.name
+
+having (sum(e.emails_opened)/sum(e.emails_sent))*100 > 50   -- nullif(sum(e.emails_sent),0) to avoid div by 0
+
+order by (sum(e.emails_opened)/sum(e.emails_sent))*100 desc, c.name asc;
+ 
+ 
+--Q37
+ 
+select b.name , count(m.maturity) as maturity_dates, 
+
+min(m.maturity) as earliest_maturity, max(m.maturity) as latest_maturity,
+
+ceil(avg(timestampdiff(day, '2023-09-13', m.maturity))) as avg_days_to_maturity
+ 
+from bonds b 
+
+join maturities m 
+
+on b.id = m.bond_id
+
+group by b.name
+
+having ceil(avg(timestampdiff(day, '2023-09-13', m.maturity))) > 365
+
+order by b.name;
+ 
+ 
+--Q38   ...
+ 
+SELECT
+
+b.name,
+
+COUNT(ir.rate)                                  AS interest_rates,
+
+CAST(MIN(ir.rate) AS DECIMAL(3,1))              AS lowest_rate,
+
+CAST(MAX(ir.rate) AS DECIMAL(3,1))              AS highest_rate,
+
+CAST(ROUND(AVG(ir.rate), 2) AS DECIMAL(4,2))    AS avg_rate
+
+FROM bonds b
+
+JOIN interest_rates ir
+
+ON ir.bond_id = b.id
+
+GROUP BY b.name
+
+HAVING AVG(ir.rate) > 3.00
+
+ORDER BY b.name;
+ 
+ 
+--Q39
+ 
+select b.name , sum(annual_coupon * coupons_remaining)  as total_cash_flow
+
+from bondholders b 
+
+left join bondholders_bonds bb on bb.bondholder_id = b.id 
+
+left join bonds bo on  bb.bond_id  = bo.id
+
+group by b.name
+
+having sum(annual_coupon * coupons_remaining) > 10000.00
+
+order by sum(annual_coupon * coupons_remaining) desc;
+ 
+ 
+--Q43
+ 
+ 
+select p.title as title , count(pj.id) as total_projects,
+
+sum(pj.income) as total_income, count(distinct f.freelancer_id) as total_freelancers,
+
+round(sum(pj.income)/count(distinct f.freelancer_id),2) as average_income_per_freelancer   --nullif(,0)
+ 
+ 
+from professions p 
+
+join freelancers f on p.id = f.profession_id
+
+join projects pj on pj.id = f.project_id
+
+where pj.status = 'Completed'
+
+group by p.id, p.title
+
+order by total_income desc;
+ 
+ 
+--Q47  ..
+ 
+select n.cidr, count(i.network_id) as instances, 
+
+concat(ceil(avg(replace(i.cpu_usage,'%','')+0)),'%') as avg_cpu_usage,
+
+  concat(ceil(avg(replace(i.memory_usage,'%','')+0)),'%') as avg_memory_usage,
+ 
+  concat(ceil(avg(replace(i.network_usage,'%','')+0)),'%') as avg_network_usage
+
+
+from networks n 
+
+join instances i on n.id = i.network_id
+
+where n.id in (
+
+      select network_id from instances where replace(cpu_usage,'%','')+0 >= 80
+
+)
+
+group by n.cidr
+
+order by n.cidr asc;
+ 
+ 
+--Q48   ..
+ 
+SELECT
+
+t.hash,
+
+SUM(
+
+   TIMESTAMPDIFF(
+
+     SECOND,
+
+     STR_TO_DATE(p.start_dt, '%Y-%m-%d %H:%i:%s'),
+
+     STR_TO_DATE(p.end_dt,   '%Y-%m-%d %H:%i:%s')
+
+   )
+
+) AS usage_time
+
+FROM tasks t
+
+JOIN processes p ON p.task_id = t.id
+
+GROUP BY t.hash
+
+ORDER BY usage_time DESC;
+ 
+ 
+ 
+--Q50   ..
+ 
+ 
+select a.username , a.email ,
+ 
+(select t2.name 
+
+from tariffs t2
+
+join readings r on t2.id = r.tariff_id
+
+where r.account_id = a.id
+
+GROUP BY t2.name 
+
+order by t2.cost desc limit 1 ) as highest_tariff,A
+ 
+sum(r.amount) as consumption   , round(sum(r.amount * t.cost),2) as total_cost
+
+from accounts a 
+
+join readings r on a.id = r.account_id
+
+join tariffs t on t.id = r.tariff_id
+
+group by a.id,a.username, a.email,highest_tariff
+
+order by a.username asc;
+ 
+ 
+--------------------------------------------------------------------------------------------------------------
+ 
+ 
+WITH joined AS (
+ 
+  SELECT a.id AS account_id, a.username, a.email,
+ 
+         r.amount, t.cost, t.name,
+ 
+         ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY t.cost DESC, t.id) AS rn
+ 
+  FROM accounts a
+ 
+  JOIN readings r ON a.id = r.account_id
+ 
+  JOIN tariffs t ON t.id = r.tariff_id
+ 
+)
+ 
+SELECT username, email,
+ 
+       MAX(CASE WHEN rn = 1 THEN name END) AS highest_tariff,
+ 
+       SUM(amount) AS consumption,
+ 
+       ROUND(SUM(amount * cost), 2) AS total_cost
+ 
+FROM joined
+ 
+GROUP BY username, email
+ 
+ORDER BY username;
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------------
+ 
+ 
+--Q51
+ 
+select a.username, a.email, count(ai.item_id) as items,
+
+sum(i.weight) as total_weight
+ 
+from accounts a 
+
+join accounts_items ai a.id = ai.account_id 
+
+join items i i.id = ai.item_id
+ 
+group by a.id, a.username, a.email
+
+having sum(i.weight) > 20
+
+order by total_weight desc, a.username asc;
+ 
+ 
+ 
+ 

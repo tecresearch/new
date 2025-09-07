@@ -93,5 +93,3 @@ select * from transactions;
 
 
 
-
-

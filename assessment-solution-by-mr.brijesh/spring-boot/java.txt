@@ -1,0 +1,861 @@
+1: Employee Validator****************************************
+
+package com.hackerrank.validator.controller;
+
+import com.hackerrank.validator.model.Employee;
+import com.hackerrank.validator.repository.EmployeeRepository;
+import com.hackerrank.validator.validation.EmployeeValidator;
+import com.hackerrank.validator.validation.FieldValidationMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.bind.BindResult;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+public class EmployeeController {
+    @Autowired
+    EmployeeRepository repository;
+
+    @RequestMapping(value = "/employee", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> validateBody(@RequestBody Employee employee) throws BindException {
+        EmployeeValidator validator = new EmployeeValidator();
+        WebDataBinder binder=new WebDataBinder(employee);
+        binder.setValidator(validator);
+        BindingResult result=binder.getBindingResult();
+        if (result.hasErrors()) {
+            List<FieldValidationMessage> error=result.getAllErrors()
+                    .stream()
+                    .map(err->new FieldValidationMessage(err.getDefaultMessage())).collect(Collectors.toList());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+        binder.validate();
+        binder.close();
+        return ResponseEntity.status(HttpStatus.OK).body( repository.save(employee));
+    }
+}
+
+
+
+package com.hackerrank.validator.validation;
+
+import com.hackerrank.validator.model.Employee;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+@Component
+public class EmployeeValidator implements Validator {
+
+public static final DateTimeFormatter formater =DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return Employee.class.isAssignableFrom(clazz);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+
+        Employee employee = (Employee) target;
+
+        if(employee.getFullName()==null || employee.getFullName().trim().isEmpty()){
+            errors.rejectValue("FullName","fullName.empty","The fullName is a mandatory field");
+        }
+        if(employee.getMobileNumber()==null || String.valueOf(employee.getMobileNumber()).length()!=10){
+            errors.rejectValue("MobileNumber","mobileNumber.invalid","The mobileNumber is a mandatory field");
+        }
+        if(employee.getEmailId()==null || employee.getEmailId().trim().isEmpty()){
+            errors.rejectValue("EmailId","emailId.empty","The emailId is a mandatory field");
+        }else if(!employee.getEmailId().contains("@")){
+            errors.rejectValue("EmailId","emailId.invalid","The emailId should be in a valid email format");
+        }
+        if(employee.getDateOfBirth()==null || employee.getDateOfBirth().trim().isEmpty()){
+            errors.rejectValue("DateOfBirth","dateOfBirth.empty","The dateOfBirth is a mandatory field");
+        }else{
+            try {
+                LocalDate.parse(employee.getDateOfBirth(),formater);
+            } catch (Exception e) {
+                errors.rejectValue("DateOfBirth","dateOfBirth.invalid","The dateOfBirth should be in YYYY-MM-DD format");
+            }
+        }
+
+    }
+}
+______________________________________________________
+
+2: MicroService:
+package com.hackerrank.sample.controller;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+import com.hackerrank.sample.dto.FilteredProducts;
+import com.hackerrank.sample.dto.SortedProducts;
+
+@RestController
+public class SampleController {
+
+	
+	   final String uri = "https://jsonmock.hackerrank.com/api/inventory";
+	   RestTemplate restTemplate = new RestTemplate();
+	   String result = restTemplate.getForObject(uri, String.class);			
+	   JSONObject root = new JSONObject(result);
+	   
+	   JSONArray data = root.getJSONArray("data");
+	   
+	   
+		
+		@CrossOrigin
+		@GetMapping("/filter/price/{initial_price}/{final_price}")  
+		private ResponseEntity< ArrayList<FilteredProducts> > filtered_books(@PathVariable("initial_price") int init_price , @PathVariable("final_price") int final_price)   
+		{  
+			
+			try {
+				
+			
+					ArrayList<FilteredProducts> books = new ArrayList<FilteredProducts>();
+
+
+				for (int i = 0; i < data.length(); i++) {
+					JSONObject item = data.getJSONObject(i);
+					int price = item.getInt("price");
+					if (init_price > final_price) {
+						return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+					}
+
+					if (price > init_price && price < final_price) {
+						books.add(new FilteredProducts(item.getString("barcode")));
+					}
+				}
+
+				// Return 404 if no products found in the range
+				if (books.isEmpty()) {
+					return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+				}
+
+				return new ResponseEntity<ArrayList<FilteredProducts>>(books, HttpStatus.OK);
+
+			   
+			    
+			}catch(Exception E)
+				{
+	   	System.out.println("Error encountered : "+E.getMessage());
+	    return new ResponseEntity<ArrayList<FilteredProducts>>(HttpStatus.NOT_FOUND);
+				}
+			
+		}  
+		
+		
+		@CrossOrigin
+		@GetMapping("/sort/price")  
+		private ResponseEntity<SortedProducts[]> sorted_books()   
+		{  
+			
+			try {
+				
+
+
+				ArrayList<JSONObject> productList = new ArrayList<>();
+				for (int i = 0; i < data.length(); i++) {
+					productList.add(data.getJSONObject(i));
+				}
+				productList.sort((a, b) -> Integer.compare(a.getInt("price"), b.getInt("price")));
+				SortedProducts[] ans = new SortedProducts[productList.size()];
+				for (int i = 0; i < productList.size(); i++) {
+					ans[i] = new SortedProducts(productList.get(i).getString("barcode"));
+				}
+
+				return new ResponseEntity<SortedProducts[]>(ans, HttpStatus.OK);
+
+			    
+			}catch(Exception E)
+				{
+	   	System.out.println("Error encountered : "+E.getMessage());
+	    return new ResponseEntity<SortedProducts[]>(HttpStatus.NOT_FOUND);
+				}
+			
+		}  
+		
+		
+	
+}
+
+______________________________________________________________________________
+
+
+3: Git Event : package com.hackerrank.gevents.controller;
+
+import com.hackerrank.gevents.model.Event;
+import com.hackerrank.gevents.repository.EventRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+public class EventController {
+    @Autowired
+    private EventRepository eventRepository;
+    @PostMapping("/events")
+    public ResponseEntity<Event> createEvent(@RequestBody Event event){
+       return ResponseEntity.status(HttpStatus.CREATED).body(eventRepository.save(event));
+    }
+    @GetMapping("/events")
+    public ResponseEntity<List<Event>> getAllEvent(){
+        return ResponseEntity.ok(eventRepository.findAll(Sort.by(Sort.Direction.ASC,"id")));
+    }
+
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<Event> getEvent(@PathVariable("eventId")  Integer id){
+        Event event=eventRepository.findById(id).orElse(null);
+        if(event==null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }else{
+            return ResponseEntity.status(HttpStatus.OK).body(event);
+        }
+    }
+
+    @RequestMapping(value = "/repos/{repoId}/events",method =  RequestMethod.GET)
+    public ResponseEntity<List<Event>> getEventByRepoId(@PathVariable("repoId") Integer repoId) {
+        Optional<Event> event = eventRepository.findById(repoId);
+
+        if(!event.isPresent()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        else {
+            List<Event>events=eventRepository.findByRepoIdOrderByIdAsc(repoId);
+            return ResponseEntity.status(HttpStatus.OK).body(events);
+        }
+    }
+
+
+
+}
+ 
+
+_____________________________________
+4: Stock Trades
+
+package com.hackerrank.stocktrades.controller;
+
+import com.hackerrank.stocktrades.model.StockTrade;
+import com.hackerrank.stocktrades.repository.StockTradeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/trades")
+public class StockTradeRestController {
+    @Autowired
+    private StockTradeRepository stockTradeRepository;
+    @PostMapping("")
+    public ResponseEntity<StockTrade> post(@RequestBody StockTrade stockTrade) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(stockTradeRepository.save(stockTrade));
+    }
+    @GetMapping("")
+    public ResponseEntity<List<StockTrade>> getAll() {
+    return ResponseEntity.status(HttpStatus.OK).body(stockTradeRepository.findAll(Sort.by("id")));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<StockTrade> getById(@PathVariable("id") Integer id) {
+        StockTrade stockTrade = stockTradeRepository.findById(id).orElse(null);
+        if(stockTrade != null) {
+            return ResponseEntity.status(HttpStatus.OK).body(stockTrade);
+        }else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+}
+
+___________________________________________________________________
+
+5: Trading PlatForm:
+
+package com.hackerrank.tradingplatform.controller;
+
+import com.hackerrank.tradingplatform.dto.AddMoneyTraderDTO;
+import com.hackerrank.tradingplatform.dto.TraderDTO;
+import com.hackerrank.tradingplatform.dto.UpdateTraderDTO;
+import com.hackerrank.tradingplatform.model.Trader;
+import com.hackerrank.tradingplatform.service.TraderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+
+import static java.util.stream.Collectors.toList;
+
+@RestController
+@RequestMapping(value = "/trading/traders")
+public class TraderController {
+    @Autowired
+    private TraderService traderService;
+
+    //register
+    @RequestMapping(value = "/register", method = RequestMethod.POST, consumes = "application/json")
+    //@ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<Trader> registerTrader(@RequestBody @Valid Trader trader) {
+        
+        Optional<Trader> existingTrader = traderService.getTraderByEmail(trader.getEmail());
+
+        if(existingTrader.isPresent()){ //we found same email in db
+            //return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            //    .body(null);
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }else{
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(traderService.registerTrader(trader));
+        }
+    }
+
+    //get by email
+    @RequestMapping(method = RequestMethod.GET)
+    //@ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<TraderDTO> getTraderByEmail(@RequestParam("email") String email) {
+        Optional<Trader> existingTrader = traderService.getTraderByEmail(email);
+
+        Trader existingEntity = traderService.getTraderByEmail(email).orElse(null);
+
+
+        if(existingTrader.isPresent()){
+           // return ResponseEntity.status(HttpStatus.OK)
+           // .body(new TraderDTO(traderService.getTraderByEmail//(email)));
+           return ResponseEntity.ok(new TraderDTO(existingEntity));
+        }else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(null);
+        }
+    }
+
+    //get all
+    @RequestMapping(value = "/all", method = RequestMethod.GET)
+    //@ResponseStatus(HttpStatus.OK)
+    public List<TraderDTO> getAllTraders() {
+        return traderService.getAllTraders()
+                .stream()
+                .map(TraderDTO::new)
+                .collect(toList());
+    }
+
+    //update by email
+    @RequestMapping(method = RequestMethod.PUT)
+    //@ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Trader> updateTrader(@RequestBody @Valid UpdateTraderDTO trader) {
+
+        return ResponseEntity.ok(traderService.updateTrader(trader));
+    }
+
+    //add money
+    @RequestMapping(value = "/add", method = RequestMethod.PUT)
+    //@ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Trader> addMoney(@RequestBody @Valid AddMoneyTraderDTO trader) {
+        Trader existingTrader = traderService.
+            addMoney(trader);
+
+           return ResponseEntity.ok(existingTrader);
+
+    }   
+}
+
+
+SERVICE :
+
+package com.hackerrank.tradingplatform.service;
+
+import com.hackerrank.tradingplatform.dto.AddMoneyTraderDTO;
+import com.hackerrank.tradingplatform.dto.TraderDTO;
+import com.hackerrank.tradingplatform.dto.UpdateTraderDTO;
+import com.hackerrank.tradingplatform.model.Trader;
+import com.hackerrank.tradingplatform.repository.TraderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class TraderService {
+    @Autowired
+    private TraderRepository traderRepository;
+
+    public Trader registerTrader(Trader trader) {
+        return traderRepository.save(trader);
+    }
+
+    public Trader getTraderById(Long id) {
+        return traderRepository.findById(id).get();
+    }
+
+    public Optional<Trader> getTraderByEmail(String email) {
+        //return traderRepository.findByEmail(email).orElse(new Trader());
+        return traderRepository.findByEmail(email);
+    }
+
+    public List<Trader> getAllTraders() {
+        return traderRepository.findAll();
+    }
+
+    public Trader updateTrader(UpdateTraderDTO trader) {
+         Trader existingTrader = traderRepository.findByEmail(trader.getEmail()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+         
+         existingTrader.setName(trader.getName());
+
+        return traderRepository.save(existingTrader);
+    }
+
+    public Trader addMoney(AddMoneyTraderDTO trader) {
+        Trader existingTrader = traderRepository.findByEmail(trader.getEmail()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        double balance = existingTrader.getBalance();
+        existingTrader.setBalance(balance + trader.getAmount());
+
+        return traderRepository.save(existingTrader);
+    }
+}
+
+
+___________________________________________________________________________
+
+
+6 : Weather API 
+
+package com.hackerrank.weather.controller;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.hackerrank.weather.model.Weather;
+import com.hackerrank.weather.repository.WeatherRepository;
+
+@RestController
+@RequestMapping("/weather")
+public class WeatherApiRestController {
+	
+	private WeatherRepository weatherRepository;
+	
+	
+	public WeatherApiRestController(WeatherRepository weatherRepository) {
+		super();
+		this.weatherRepository = weatherRepository;
+	}
+
+
+	@PostMapping
+	public ResponseEntity<Weather> createWeather(@RequestBody Weather w) {
+		Weather weather=weatherRepository.saveAndFlush(w);
+		return new ResponseEntity<Weather>(weather,HttpStatus.CREATED);
+	}
+	@GetMapping
+	public ResponseEntity<List<Weather>> getAllWeather(){
+		List<Weather> all=weatherRepository.findAll(Sort.by(Sort.Direction.ASC,"id"));
+		return new ResponseEntity<List<Weather>>(all,HttpStatus.OK);
+	}
+	@GetMapping("/{id}")
+	public ResponseEntity<Weather> getWeather(@PathVariable Integer id) {
+		Optional<Weather> op=weatherRepository.findById(id);
+		if(op.isPresent())
+			return new ResponseEntity<Weather>(op.get(),HttpStatus.OK);
+		else
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
+	
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Weather> deleteWeather(@PathVariable Integer id) {
+		Optional<Weather> op=weatherRepository.findById(id);
+		if(op.isPresent()) {
+			weatherRepository.delete(op.get());
+			return new ResponseEntity<>(HttpStatusCode.valueOf(204));
+		}
+		else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+}
+
+
+
+
+
+
+_______________________________________________________________
+
+7: Sport Health
+
+package com.hackerrank.whc.controller;
+
+import com.hackerrank.whc.model.Coach;
+import com.hackerrank.whc.model.Customer;
+import com.hackerrank.whc.repository.CoachRepository;
+import com.hackerrank.whc.repository.CustomerRepository;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+
+@RestController
+@RequestMapping("/api/coach")
+public class CoachController {
+
+    final CoachRepository repository;
+
+    public CoachController(CoachRepository repository) {
+        this.repository = repository;
+    }
+
+    @PostMapping("")
+    public ResponseEntity<Coach> save(@RequestBody Coach request){
+        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(request));
+    }
+    @GetMapping("")
+    public ResponseEntity<List<Coach>> findAll(){
+        return ResponseEntity.status(HttpStatus.OK).body(repository.findAll(Sort.by("id")));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Coach> finById(@PathVariable("id") Integer id){
+
+        Coach coach=repository.findById(id).orElse(null);
+        if(coach == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }else{
+            return ResponseEntity.status(HttpStatus.OK).body(coach);
+        }
+
+    }
+}
+
+
+---------
+package com.hackerrank.whc.controller;
+
+import com.hackerrank.whc.model.Customer;
+import com.hackerrank.whc.repository.CustomerRepository;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/customer")
+public class CustomerController {
+
+    final CustomerRepository repository;
+
+    public CustomerController(CustomerRepository repository) {
+        this.repository = repository;
+    }
+
+    @PostMapping("")
+    public ResponseEntity<Customer> save(@RequestBody Customer request){
+        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(request));
+    }
+    @GetMapping("")
+    public ResponseEntity<List<Customer>> findAll(){
+        return ResponseEntity.status(HttpStatus.OK).body(repository.findAll(Sort.by("id")));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Customer> finById(@PathVariable("id") Integer id){
+
+        Customer customer=repository.findById(id).orElse(null);
+        if(customer == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }else{
+            return ResponseEntity.status(HttpStatus.OK).body(customer);
+        }
+
+    }
+
+
+}
+
+
+
+_____________________________
+
+8: FIZZBUZZ
+
+package com.hackerrank.restcontrolleradvice.controller;
+
+import com.hackerrank.restcontrolleradvice.dto.BuzzException;
+import com.hackerrank.restcontrolleradvice.dto.FizzBuzzException;
+import com.hackerrank.restcontrolleradvice.dto.FizzBuzzResponse;
+import com.hackerrank.restcontrolleradvice.dto.FizzException;
+import com.hackerrank.restcontrolleradvice.enums.FizzBuzzEnum;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class FizzBuzzController {
+
+  @RequestMapping(value = "/controller_advice/{code}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<FizzBuzzResponse> getFizzBuzzResponse(@PathVariable("code") String code)
+          throws FizzException, BuzzException, FizzBuzzException {
+    if (FizzBuzzEnum.FIZZ.getValue().equals(code)) {
+      throw new FizzException("Fizz Exception has been thrown","Internal Server Error");
+    } else if (FizzBuzzEnum.BUZZ.getValue().equals(code)) {
+      throw new BuzzException("Buzz Exception has been thrown","Bad Request");
+    } else if (FizzBuzzEnum.FIZZBUZZ.getValue().equals(code)) {
+      throw new FizzBuzzException("FizzBuzz Exception has been thrown","Insufficient Storage");
+    }
+
+    return ResponseEntity.status(HttpStatus.OK).body(new FizzBuzzResponse("Successfully completed fizzbuzz test",200));
+  }
+}
+
+
+package com.hackerrank.restcontrolleradvice.exception;
+
+import com.hackerrank.restcontrolleradvice.dto.BuzzException;
+import com.hackerrank.restcontrolleradvice.dto.FizzBuzzException;
+import com.hackerrank.restcontrolleradvice.dto.FizzException;
+import com.hackerrank.restcontrolleradvice.dto.GlobalError;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+@RestControllerAdvice
+public class FizzBuzzExceptionHandler extends ResponseEntityExceptionHandler {
+
+  //TODO:: implement handler methods for FizzException, BuzzException and FizzBuzzException
+    @ExceptionHandler
+    public ResponseEntity<GlobalError> FizzException(FizzException ex){
+        GlobalError errors=new  GlobalError();
+        errors.setMessage(ex.getMessage());
+        errors.setErrorReason(ex.getErrorReason());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errors);
+    }
+    @ExceptionHandler
+    public ResponseEntity<GlobalError> BuzzException(BuzzException ex){
+        GlobalError errors=new  GlobalError();
+        errors.setMessage(ex.getMessage());
+        errors.setErrorReason(ex.getErrorReason());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+    @ExceptionHandler
+    public ResponseEntity<GlobalError> FizzBuzzException(FizzBuzzException ex){
+        GlobalError errors=new  GlobalError();
+        errors.setMessage(ex.getMessage());
+        errors.setErrorReason(ex.getErrorReason());
+        return ResponseEntity.status(HttpStatus.INSUFFICIENT_STORAGE).body(errors);
+    }
+}
+
+
+
+______________________________________________________
+
+
+9 : MUSIC STREAMING 
+CONTROLLERS
+
+___________________
+
+package com.music.streaming.platform.controller;
+
+import com.music.streaming.platform.dto.ArtistRequest;
+import com.music.streaming.platform.model.Artist;
+import com.music.streaming.platform.service.ArtistService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/music/platform/v1/artists")
+public class ArtistController {
+    private final ArtistService service;
+    public ArtistController(ArtistService service) {
+        this.service=service;
+    }
+
+    @PostMapping()
+    public ResponseEntity<Artist> create(@RequestBody ArtistRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(service.createArtist(request));
+    }
+    @GetMapping()
+    public ResponseEntity<List<Artist>> getAll(){
+        return ResponseEntity.status(HttpStatus.OK).body(service.getAllArtists());
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Artist> getById(@PathVariable("id") Long id) {
+        Artist artist=service.getArtistById(id);
+        if(artist==null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(artist);
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<Artist> update(@PathVariable("id") Long id,@RequestBody ArtistRequest request){
+            return ResponseEntity.status(HttpStatus.OK).body(service.updateArtist(id,request));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Artist> delete(@PathVariable("id") Long id){
+            service.deleteArtist(id);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+}
+
+
+
+package com.music.streaming.platform.controller;
+
+import com.music.streaming.platform.dto.PlayListRequest;
+import com.music.streaming.platform.model.PlayList;
+import com.music.streaming.platform.service.PlayListService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/music/platform/v1/playlists")
+public class PlayListController {
+    private final PlayListService service;
+    public PlayListController(PlayListService service) {
+        this.service=service;
+    }
+
+    @PostMapping()
+    public ResponseEntity<PlayList> create(@RequestBody PlayListRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(service.createPlayList(request));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PlayList> getById(@PathVariable("id") Long id) {
+        PlayList PlayList=service.getPlayListById(id);
+        if(PlayList==null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(PlayList);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<PlayList> delete(@PathVariable("id") Long id){
+            service.deletePlayList(id);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+}
+
+
+package com.music.streaming.platform.controller;
+
+import com.music.streaming.platform.dto.TrackRequest;
+import com.music.streaming.platform.model.Track;
+import com.music.streaming.platform.service.TrackService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+@RestController
+@RequestMapping("/music/platform/v1/tracks")
+public class TrackController {
+    private final TrackService service;
+    public TrackController(TrackService service) {
+        this.service=service;
+    }
+
+    @PostMapping()
+    public ResponseEntity<Track> create(@RequestBody TrackRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(service.createTrack(request));
+    }
+    @GetMapping()
+    public ResponseEntity<List<Track>> getAll(){
+        return ResponseEntity.status(HttpStatus.OK).body(service.getAllTracks());
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Track> getById(@PathVariable("id") Long id) {
+        Track Track=service.getTrackById(id);
+        if(Track==null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(Track);
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<Track> update(@PathVariable("id") Long id,@RequestBody TrackRequest request){
+            return ResponseEntity.status(HttpStatus.OK).body(service.updateTrack(id,request));
+
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Track> delete(@PathVariable("id") Long id){
+        Track Track=service.getTrackById(id);
+            service.deleteTrack(id);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+
+    }
+
+}
+
+_________________________________

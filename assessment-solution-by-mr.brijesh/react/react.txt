@@ -1,0 +1,3206 @@
+1: TEAM AND CHANNEL
+-----------------
+
+import React, { useState } from "react";
+import Team from "./Team";
+import "./TeamList.css";
+
+const TeamList = () => {
+  const [teams, setTeams] = useState([
+    {
+      name: "Team1",
+      channels: [
+        { name: "Channel1", id: 1 },
+        { name: "Channel2", id: 2 },
+      ],
+    },
+    {
+      name: "Team2",
+      channels: [
+        { name: "Channel1", id: 1 },
+        { name: "Channel2", id: 2 },
+      ],
+    },
+  ]);
+
+  const [teamName, setTeamName] = useState("");
+
+  // update team channels
+  const updateTeam = (teamId, newChannels) => {
+    const updated = teams.map((t, i) =>
+      i === teamId ? { ...t, channels: newChannels } : t
+    );
+    setTeams(updated);
+  };
+
+  // add new team
+  const handleAddTeam = () => {
+    if (!teamName.trim()) return;
+    if (teams.some((t) => t.name === teamName.trim())) return;
+
+    setTeams([...teams, { name: teamName.trim(), channels: [] }]);
+    setTeamName("");
+  };
+
+  return (
+    <div className="w-50 mx-auto">
+      <div className="card w-35 mt-50 mx-auto px-10 py-15">
+        <div className="layout-column" data-testid="team-list">
+          {teams &&
+            teams.map((team, id) => (
+              <Team key={id} id={id} team={team} updateTeam={updateTeam} />
+            ))}
+        </div>
+        <div className="layout-row">
+          <input
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+            placeholder="Enter Team Name"
+            className="team-list-input w-75"
+            data-testid="team-name-input"
+          />
+          <button
+            disabled={
+              !teamName.trim() || teams.some((t) => t.name === teamName.trim())
+            }
+            onClick={handleAddTeam}
+            className="team-list-btn x-small w-35 h-30 pa-6 ma-0 ml-6"
+            data-testid="add-team-btn"
+          >
+            Add Team
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TeamList;
+
+
+-----
+
+import React, { useState } from "react";
+import "./Team.css";
+
+const Team = ({ team, id, updateTeam }) => {
+  const [channelName, setChannelName] = useState("");
+
+  // handle add channel
+  const handleAddChannel = () => {
+    if (!channelName.trim()) return;
+    if (team.channels.some((c) => c.name === channelName.trim())) return;
+
+    const newChannel = {
+      name: channelName.trim(),
+      id:
+        team.channels.length > 0
+          ? Math.max(...team.channels.map((c) => c.id)) + 1
+          : 1,
+    };
+
+    updateTeam(id, [...team.channels, newChannel]);
+    setChannelName("");
+  };
+
+  // handle remove channel
+  const handleRemoveChannel = (channelId) => {
+    const newChannels = team.channels.filter((c) => c.id !== channelId);
+    updateTeam(id, newChannels);
+  };
+
+  return (
+    <div>
+      {team && <h4 className="mt-0 mb-6">{team.name}</h4>}
+      {team && (
+        <div className="layout-row justify-content-end mb-6">
+          <input
+            value={channelName}
+            onChange={(e) => setChannelName(e.target.value)}
+            placeholder="Enter Channel Name"
+            className="channel-name-input w-45 px-13"
+            data-testid={"channel-name-input-" + id}
+          />
+          <button
+            disabled={
+              !channelName.trim() ||
+              team.channels.some((c) => c.name === channelName.trim())
+            }
+            onClick={handleAddChannel}
+            className="channel-name-btn x-small w-35 h-30 pa-6 ma-0 ml-6"
+            data-testid={"add-channel-btn-" + id}
+          >
+            Add Channel
+          </button>
+        </div>
+      )}
+      {team && (
+        <ul className="styled mb-20 pl-25" data-testid={"channel-list-" + id}>
+          {team.channels &&
+            team.channels.map((channel) => (
+              <li
+                key={channel.id}
+                className="flex slide-up-fade-in justify-content-between align-items-center pl-10 pr-5 py-6 mt-0 mb-6"
+              >
+                <span>{channel.name}</span>
+                <button
+                  onClick={() => handleRemoveChannel(channel.id)}
+                  data-testid={"remove-channel-button-" + id + channel.id}
+                  className="icon-only x-small danger ma-0 pa-0"
+                >
+                  <i className="material-icons">delete</i>
+                </button>
+              </li>
+            ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default Team;
+
+
+___________________________________
+
+2:TEAM SELECTION 
+
+import React, { useState } from "react";
+import playersList from "../../players.json";
+
+export default function TeamSelection() {
+  const [available,setAvailable]=useState(playersList);
+  const [selected,setSelected]=useState([]);
+  const [disabled,setDisabled]=useState(new Set());
+
+  const sortBy = (key) => {
+    // Empty function - no sorting functionality 
+              const sorted=[...available].sort((a,b)=>{
+                if(typeof a[key] === "string"){
+                  return a[key].localeCompare(b[key]);
+                }
+                return a[key]-b[key];
+              })  
+        setAvailable(sorted);                 
+  };
+
+  const addPlayer = (index) => {
+    // Empty function - no add functionality
+    console.log("player",available[index]);
+    const player=available[index];
+    if(!disabled.has(player.name)){
+      setSelected([...selected,player]);
+      setDisabled(new Set([...disabled,player.name]));
+    }    
+  };
+
+  const removePlayer = (name) => {
+    // Empty function - no remove functionality
+   setSelected(selected.filter((player)=>(
+    player.name!==name
+   )));
+   const updated=new Set(disabled);
+   updated.delete(name);
+   setDisabled(updated);
+  };
+
+  return (
+    <div className="flex flex-col items-start gap-6 sm:gap-8 px-4 sm:px-6 md:px-8 lg:px-12 pt-8 sm:pt-12 pb-24 w-full">
+      {/* Two Columns */}
+      <div className="flex w-full items-start gap-6 flex-col lg:flex-row">
+        {/* Available Players Section */}
+        <div className="flex-1 w-full">
+          <h2
+            className="m-0 p-0 mb-6 font-satoshi text-2xl sm:text-[32px] leading-8 sm:leading-[44px] font-bold text-[#101828]"
+            style={{ fontFeatureSettings: "'ss03' on" }}
+          >
+            Available Players
+          </h2>
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed font-satoshi text-sm" style={{ fontFeatureSettings: "'ss03' on" }}>
+                  <thead>
+                    <tr className="border-b border-[#ECEFF2] align-middle">
+                      <th 
+                        data-testid="available-players-name" 
+                        onClick={() => sortBy("name")}
+                        className="text-left py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6 cursor-pointer hover:bg-gray-50 w-auto sm:w-[160px]"
+                      >
+                        Name
+                      </th>
+                      <th 
+                        data-testid="available-players-role" 
+                        onClick={() => sortBy("type")}
+                        className="text-left py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6 cursor-pointer hover:bg-gray-50"
+                      >
+                        Role
+                      </th>
+                      <th 
+                        data-testid="available-players-bat" 
+                        onClick={() => sortBy("battingSkill")}
+                        className="hidden sm:table-cell text-center py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6 cursor-pointer hover:bg-gray-50"
+                      >
+                        Bat
+                      </th>
+                      <th 
+                        data-testid="available-players-bowl" 
+                        onClick={() => sortBy("bowlingSkill")}
+                        className="hidden sm:table-cell text-center py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6 cursor-pointer hover:bg-gray-50"
+                      >
+                        Bowl
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody data-testid="available-players-table-body">
+                    {available.map((player, index) => (
+                      <tr 
+                        data-testid={`available-${player.name.split(" ").join("-")}-row`} 
+                        key={index}
+                        className="border-b border-[#ECEFF2] hover:bg-gray-50 align-middle"
+                      >
+                        <td 
+                          data-testid={`available-${player.name.split(" ").join("-")}-name`}
+                          className="flex items-center gap-3 py-2 sm:py-3 px-3 sm:px-6 text-[#101828] leading-5 w-auto sm:w-[180px] truncate"
+                        >
+                          {player.name}
+                        </td>
+                        <td className="py-2 sm:py-3 px-3 sm:px-6 text-[#516778] leading-5 truncate whitespace-nowrap">{player.type}</td>
+                        <td className="hidden sm:table-cell py-2 sm:py-3 px-3 sm:px-6 text-center text-[#516778] leading-5">{player.battingSkill}</td>
+                        <td className="hidden sm:table-cell py-2 sm:py-3 px-3 sm:px-6 text-center text-[#516778] leading-5">{player.bowlingSkill}</td>
+                        <td className="py-0 px-0 text-center w-12 sm:w-[68px]">
+                          <button 
+                            data-testid={`available-${player.name.split(" ").join("-")}-select`} 
+                            onClick={() => addPlayer(index)} 
+                            aria-label="Select player"
+                            disabled={disabled.has(player.name)}
+                            className={`w-12 sm:w-[68px] px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-center  gap-3 border-b border-[#ECEFF2] hover:bg-gray-50
+                            ${disabled.has(player.name)?"opacity-50 cursor-not-allowed":"hover-bg-gray-50"}
+                            `}
+                          >
+                            <span className="inline-flex items-center justify-center w-12 h-6 rounded-full bg-green-100">
+                              <img src="/assets/arrow.svg" alt="Select" />
+                            </span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Selected Players Section */}
+        <div className="flex-1 w-full">
+          <h2
+            className="m-0 p-0 mb-6 font-satoshi text-2xl sm:text-[32px] leading-8 sm:leading-[44px] font-bold text-[#101828]"
+            style={{ fontFeatureSettings: "'ss03' on" }}
+          >
+            Selected Players
+          </h2>
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed font-satoshi text-sm" style={{ fontFeatureSettings: "'ss03' on" }}>
+                  <thead>
+      
+                    <tr className="border-b border-[#ECEFF2] align-middle">
+                      <th className="text-left py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6 w-auto sm:w-[180px]">Name</th>
+                      <th className="text-left py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6">Role</th>
+                      <th className="hidden sm:table-cell text-center py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6">Bat</th>
+                      <th className="hidden sm:table-cell text-center py-2 sm:py-3 px-3 sm:px-6 font-bold text-[#516778] leading-6">Bowl</th>
+                    </tr>
+                  </thead>
+                  <tbody data-testid="selected-players-table-body">
+                    {/* Empty - no players selected */}
+                     {selected.map((player, index) => (
+                      <tr 
+                        data-testid={`selected-${player.name.split(" ").join("-")}-row`} 
+                        key={index}
+                        className="border-b border-[#ECEFF2] hover:bg-gray-50 align-middle"
+                      >
+                        <td 
+                          data-testid={`selected-${player.name.split(" ").join("-")}-name`}
+                          className="flex items-center gap-3 py-2 sm:py-3 px-3 sm:px-6 text-[#101828] leading-5 w-auto sm:w-[180px] truncate"
+                        >
+                          {player.name}
+                        </td>
+                        <td className="py-2 sm:py-3 px-3 sm:px-6 text-[#516778] leading-5 truncate whitespace-nowrap">{player.type}</td>
+                        <td className="hidden sm:table-cell py-2 sm:py-3 px-3 sm:px-6 text-center text-[#516778] leading-5">{player.battingSkill}</td>
+                        <td className="hidden sm:table-cell py-2 sm:py-3 px-3 sm:px-6 text-center text-[#516778] leading-5">{player.bowlingSkill}</td>
+                        <td className="py-0 px-0 text-center w-12 sm:w-[68px]">
+                          <button 
+                            data-testid={`selected-${player.name.split(" ").join("-")}-remove`} 
+                            onClick={() => removePlayer(player.name)} 
+                            aria-label="remove player"
+                            className="w-12 sm:w-[68px] px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-center gap-3 border-b border-[#ECEFF2] hover:bg-gray-50"
+                          >
+                            <span className="inline-flex items-center justify-center w-12 h-6 rounded-full bg-white-100">
+                              <img src="/assets/delete.svg" alt="remove" />
+                            </span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+__________________________
+
+3: TASK MANAGER 
+
+___________
+
+import React, { useState } from "react";
+import { CirclePlus, Trash2 } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+
+function Tasks() {
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!title.trim() || !priority.trim()) {
+      toast.error("Please enter both title and task priority");
+      return ;
+    }
+
+    const newTask = {
+      id: Date.now(),
+      title: title.trim(),
+      priority: Number(priority)
+    }
+
+    setTasks([...tasks, newTask]
+      .sort((a, b) =>
+        (a.priority - b.priority)
+      )
+    );
+
+    setTitle("");
+    setPriority("");
+  }
+
+const handleDelete=(id)=>{
+      setTasks((prev)=>(prev.filter((task)=>task.id!==id)));
+}
+  return (
+    <div className="flex flex-col items-center w-full px-8">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow p-5 mt-12 mb-8">
+        <div className="flex flex-row space-x-3 mb-6">
+          <div className="bg-[#DCFAE6] text-[#18A149] rounded-lg p-4 flex items-center justify-center">
+            <CirclePlus size={24} />
+          </div>
+          <div>
+            <div className="font-bold text-md sm:text-lg">Create a new task</div>
+            <div className="text-neutral-500 text-sm sm:text-base">
+              Add task title and priority to create a new task
+            </div>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6 mb-3">
+          <input
+            data-testid="input-task-name"
+            className="flex-1 rounded-lg border border-gray-200 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-gray-800 bg-gray-100"
+            placeholder="Enter task title"
+            value={title}
+            type="text"
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <input
+            type="number"
+            data-testid="input-task-priority"
+            className="md:w-72 rounded-lg border border-gray-200 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-gray-800 bg-gray-100"
+            placeholder="Enter task priority"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          />
+          <button
+            data-testid="submit-button"
+            className="h-12 px-8 rounded-md bg-black text-white font-bold text-base hover:bg-gray-900 transition"
+          >
+            Add
+          </button>
+        </form>
+      </div>
+
+      <div className="w-full max-w-5xl mb-6">
+        <h2 className="text-3xl font-bold text-black">Your Tasks</h2>
+      </div>
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow overflow-hidden mb-8">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-spacing-2 border-gray-200">
+              <th
+                className="py-4 px-6 text-base font-bold text-gray-600"
+                style={{ width: "70%" }}
+              >
+                Task Title
+              </th>
+              <th
+                className="py-4 px-6 text-base font-bold text-gray-600"
+                style={{ width: "20%" }}
+              >
+                Priority
+              </th>
+              <th className="py-4 px-6" style={{ width: "10%" }}></th>
+            </tr>
+          </thead>
+          <tbody data-testid="tasksList">
+           
+           {
+            tasks.map((task)=>{
+          return <tr key={task.id} className="border-b border-spacing-2 border-gray-200 last:border-b-0 hover:bg-gray-50 transition">
+              <td className="py-2 px-6 text-neutral-500 text-base font-normal">
+                {task.title}
+              </td>
+              <td className="py-2 px-6 text-neutral-500 text-base font-normal">
+                {task.priority}
+              </td>
+              <td className="py-2 px-6">
+                <button className="p-2 rounded" aria-label="Delete task"
+                  onClick={()=>handleDelete(task.id)}
+                >
+                  <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700" />
+                </button>
+              </td>
+            </tr>
+           
+            })
+           }
+           
+          </tbody>
+        </table>
+      </div>
+      
+ <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
+    </div>
+  );
+}
+
+export default Tasks;
+
+___________________________________
+
+
+
+4: USER EDIT PROFILE
+
+-----
+
+import React, { useState } from "react";
+
+const Profile = () => {
+
+  const [formData, setFormData] = useState({
+    firstName: "Sherlock",
+    lastName: "Holmes",
+    email: "sherlockholmes@email.com"
+  })
+  const [isClicked, setIsClicked] = useState(false);
+
+
+  const handleChange = (e) => {
+    if (!isClicked)
+      return;
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value })
+  }
+
+  const handleToggle = (e) => {
+    e.preventDefault();
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim()) {
+      alert("Please enter all profile fields");
+
+    } else
+      if (isClicked) {
+        alert("Profile updated successfully")
+        setIsClicked(false);
+      } else {
+
+        setIsClicked(true);
+      }
+
+  }
+  return (
+    <div className="w-40 mr-75">
+      <div className="card pa-50">
+        <h1>User Profile</h1>
+        <form>
+          <div className="layout-column mb-15">
+            <label htmlFor="firstname" className="mb-3">
+              First Name
+            </label>
+            {
+              isClicked ? (<input
+                type="text"
+                id="firstName"
+                name="firstName"
+                placeholder="Enter First Name"
+                value={formData.firstName}
+                onChange={handleChange}
+                data-testid="firstNameInput"
+              />) : (<div className="card pa-8" data-testid="firstNameDiv">
+                {formData.firstName}
+              </div>)
+            }
+
+
+          </div>
+          <div className="layout-column mb-15">
+            <label htmlFor="lastname" className="mb-3">
+              Last Name
+            </label>
+            {
+              isClicked ? (<input
+                type="text"
+                id="lastName"
+                name="lastName"
+                placeholder="Enter Last Name"
+                data-testid="lastNameInput"
+                value={formData.lastName}
+                onChange={handleChange}
+              />) : (<div className="card pa-8" data-testid="lastNameDiv">{formData.lastName}</div>)
+            }
+
+          </div>
+          <div className="layout-column mb-30">
+            <label htmlFor="email" className="mb-3">
+              Email
+            </label>
+            {isClicked ? (<input
+              type="text"
+              id="email"
+              name="email"
+              placeholder="Enter Email"
+              data-testid="emailInput"
+              value={formData.email}
+              onChange={handleChange}
+            />) : (<div className="card pa-8" data-testid="emailDiv">{formData.email}</div>)}
+
+          </div>
+          <div className="layout-row justify-content-end">
+            {
+              !isClicked ? (<button
+                onClick={handleToggle}
+                type="submit" className="mx-0" data-testid="changeButton"
+              >
+                Edit Profile
+              </button>) : (<button
+                onClick={handleToggle}
+                type="submit" className="mx-0" data-testid="changeButton"
+              >
+                Save Changes
+              </button>)
+            }
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;
+
+
+____________________________
+
+5: POKEMON 
+
+import React, { useState } from 'react';
+import { Pokemon } from '../pokemon/Pokemon';
+
+export const PokemonDetails = () => {
+  const [pokemon, setPokemon] = useState([]);
+  const [id, setId] = useState(0);
+  const [search, setSearch] = useState(false);
+  const [next, setNext] = useState(false);
+  const [prev, setPrev] = useState(false);
+
+  const getPokemonById = async (id) => {
+    if (id > 0 && id <= 151) {
+      const data = await getData(id);
+      if (data) {
+        setSearch(true);
+        setPokemon(data);
+        setPrev(!!data?.prev_evolution);
+        setNext(!!data?.next_evolution);
+      }
+    } else {
+      alert('Pokemon ID must be between 1 and 151');
+    }
+  };
+
+  const getData = async (id) => {
+    const response = await fetch(`https://jsonmock.hackerrank.com/api/pokemon?id=${id}`);
+    const result = await response.json();
+    return result.data;
+  };
+
+  const handlePrev = () => {
+    if (pokemon?.prev_evolution?.length > 0) {
+      const prId = Number(pokemon.prev_evolution[0].num);
+      setId(prId);
+      getPokemonById(prId);
+    }
+  };
+
+  const handleNext = () => {
+    if (pokemon?.next_evolution?.length > 0) {
+      const nxId = Number(pokemon.next_evolution[0].num);
+      setId(nxId);
+      getPokemonById(nxId);
+    }
+  };
+
+  return (
+    <div className="mt-50 layout-column justify-content-center align-items-center">
+      {search ? (
+        <>
+          <Pokemon pokemon={pokemon} />
+          <p>
+            <button data-testid="pokemon-prev" disabled={!prev} onClick={handlePrev}>
+              Previous Evolution
+            </button>
+            <button data-testid="pokemon-next" disabled={!next} onClick={handleNext}>
+              Next Evolution
+            </button>
+          </p>
+        </>
+      ) : (
+        <p>
+          <input
+            data-testid="id-input"
+            value={id}
+            onChange={(e) => setId(Number(e.target.value))}
+            type="number"
+            placeholder="Pokemon Id"
+          />
+          <button data-testid="random-pokemon" onClick={() => getPokemonById(id)} className="text">
+            Get Pokemon
+          </button>
+        </p>
+      )}
+    </div>
+  );
+};
+
+
+-----
+
+import React from 'react';
+
+export const Pokemon = ({ pokemon }) => {
+  return (
+    <div className="card outlined px-50 py-30" style={{ width: '900px' }}>
+      <div className="card-header">
+        <h4 className="card-title">Pokemon Details</h4>
+      </div>
+      <div className="card-body">
+        <div>
+          <p>
+            <strong>ID: </strong>
+            <span data-testid="pokemon-id">{pokemon.id}</span>
+          </p>
+          <p>
+            <strong>Name: </strong>
+            <span data-testid="pokemon-name">{pokemon.name}</span>
+          </p>
+          <p>
+            <strong>Type: </strong>
+          </p>
+          <ul data-testid="pokemon-types">
+            {pokemon.type.map((type, index) => (
+              <li key={index} data-testid={`pokemon-type-${type}`}>
+                {type}
+              </li>
+            ))}
+          </ul>
+          <p>
+            <strong>Height: </strong>
+            <span data-testid="pokemon-height">{pokemon.height}</span>
+          </p>
+          <p>
+            <strong>Weight: </strong>
+            <span data-testid="pokemon-weight">{pokemon.weight}</span>
+          </p>
+          <p>
+            <strong>Weaknesses: </strong>
+          </p>
+          <ol data-testid="pokemon-weaknesses">
+            {pokemon.weaknesses.map((weakness, index) => (
+              <li key={index}>{weakness}</li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+__________________________
+
+6:  NAVBAR
+
+import React, { useState }  from "react";
+import "./index.css";
+
+export default function NavBar() {
+        const [page,setPage]=useState('Home');
+  return (
+    <div className="layout-column justify-content-center align-items-center">
+      <div className="layout-row justify-content-around align-items-center mt-20 links"
+           data-testid="navigation-tabs">
+          <a onClick={()=>setPage('Home')}>Home</a>
+          <a onClick={()=>setPage('News')}>News</a>
+          <a onClick={()=>setPage('Contact')}>Contact</a>
+          <a onClick={()=>setPage('About')}>About</a>
+      </div>
+
+      <div className="card w-20 ma-0">
+        <section className="card-text" data-testid="tab-content">
+         {
+            page==='Home' &&  <span>HOME PAGE</span> 
+            ||
+            page==='News' &&  <span>NEWS PAGE</span> 
+            ||
+            page==='Contact' &&  <span>CONTACT PAGE</span> 
+            ||
+            page==='About' &&  <span>ABOUT PAGE</span> 
+         }
+        </section>
+      </div>
+    </div>
+  );
+}
+
+
+-------------------
+
+7:WATCH LIST MOVIES 
+
+
+import React, { useState } from "react";
+import MovieCard from "./MovieCard";
+import Watchlist from "./Watchlist";
+
+const movies = [
+  { id: 1, title: "Inception" },
+  { id: 2, title: "Interstellar" },
+  { id: 3, title: "The Dark Knight" },
+  { id: 4, title: "Dunkirk" },
+  { id: 5, title: "The Shawshank Redemption" },
+];
+
+const WatchlistApp = () => {
+
+  const [watchListMovies,setWatchListMovies]=useState([]);
+
+  return (
+    <div>
+      <h2>Movies</h2>
+      <div className="movies-container">
+        <MovieCard 
+        movies={movies}
+        watchListMovies={watchListMovies} 
+        setWatchListMovies={setWatchListMovies}
+        isWatchList={false}
+        />
+      </div>
+
+      <Watchlist
+        watchListMovies={watchListMovies} 
+        setWatchListMovies={setWatchListMovies}
+
+        />
+    </div>
+  );
+};
+
+export default WatchlistApp;
+
+-----------------------
+
+import React from "react";
+import MovieCard from "./MovieCard";
+
+const Watchlist = ({watchListMovies,setWatchListMovies}) => {
+
+
+  return (
+     <div data-testid="watchlist-container">
+      {/* Provide the total count of movies watchlisted */}
+      <h2>Watchlist {<span>{watchListMovies.length}</span>}</h2>
+      { watchListMovies.length===0 && <p data-testid="watchlist-empty">Your watchlist is empty.</p> }
+      <div>
+        <div data-testid="movie-container" className="movies-container">
+            {
+              watchListMovies.map ((movie,id) =>(
+                     <MovieCard key={id} movies={[movie]} 
+                     watchListMovies={watchListMovies} 
+                     setWatchListMovies={setWatchListMovies}  
+                     isWatchList={true}/>
+              ))
+            }
+        </div>
+        <button data-testid="clear-watchlist-btn" onClick={()=>setWatchListMovies([])}>Clear Watchlist</button>
+      </div>
+    </div>
+  );
+};
+
+export default Watchlist;
+
+-------
+
+import React from "react";
+
+const MovieCard = ({movies, watchListMovies, setWatchListMovies, isWatchList=false}) => {
+
+
+ const inWatchMovie =(id)=>watchListMovies.find( (m)=>m.id===id);
+  
+
+  const addMovies =(id)=>{
+
+    if(!inWatchMovie(id)){
+
+       const movie=movies.find ((m)=>m.id===id);
+
+       setWatchListMovies([...watchListMovies,movie]);
+    }
+
+       
+  }
+
+  const removeMovie =(id)=>{
+       
+      const updatedMovie=watchListMovies.filter( (m)=>m.id!==id);
+      setWatchListMovies(updatedMovie);
+  }
+   
+  return (
+    // set all data-testids according to the movie id.
+    // Ex: on the movie card the data-testid for movie with id:1  will be movie-card-1
+      <div>
+           {
+               movies.map (({title, id})=>{
+
+                 const added=inWatchMovie(id);
+
+                 console.log("the value of added is :",added);
+
+                   return (
+                      <div  key={id} className="movie-card" data-testid={`movie-card-${id}`}>
+                            <h3   data-testid={`movie-title-${id}`}>{title}</h3>
+                            { isWatchList?  (<button className="danger" data-testid={`remove-btn-${id}`} onClick={()=>removeMovie(id)}>
+                              Remove
+                            </button> ):
+            
+                        (  <button data-testid={`add-btn-${id}`} onClick={()=>addMovies(id)}  disabled={added} >
+                             {added ? "Added" :"Add to WatchList"}
+                            </button>)}
+                        
+                      </div>
+                   )
+               })
+           }
+
+
+      </div>
+
+
+  );
+};
+
+export default MovieCard;
+
+____________________________
+
+8: MOVIES LIST API 
+
+import React, { use, useEffect, useState } from "react";
+import "./index.css";
+
+function MovieList() {
+
+  const [year, setYear] = useState('');
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const fetchMovies = async (e) => {
+    e.preventDefault();
+
+    try {
+      const BASE_URL = 'https://jsonmock.hackerrank.com/api/moviesdata?Year='
+      const response = await fetch(BASE_URL + `${year}`);
+      const data = await response.json();
+      setMovies(data.data);
+      console.log(movies);
+      setLoading(false);
+      setYear('')
+    } catch (error) {
+      console.log("not found: " + error);
+      loading(true);
+    }
+  }
+
+
+  return (
+    <div className="layout-column align-items-center mt-50">
+      <section className="layout-row align-items-center justify-content-center">
+        <input
+          value={year}
+          type="number"
+          className="large"
+          placeholder="Enter Year eg 2015"
+          data-testid="app-input"
+          onChange={(e) => setYear(Number(e.target.value))}
+        />
+        <button className="" data-testid="submit-button"
+          onClick={fetchMovies}
+        >Search</button>
+      </section>
+
+      <ul className="mt-50 styled" data-testid="movieList">
+
+        {movies?.map((movie, index) => (
+          <li key={index} className="slide-up-fade-in py-10">{movie.Title}</li>
+        ))}
+
+      </ul>
+
+      {movies.length === 0 && !loading && <div className="mt-50 slide-up-fade-in" data-testid="no-result">
+       No Results Found
+      </div>}
+    </div>
+  );
+}
+
+export default MovieList
+
+_______________
+
+
+
+9: KANBAN BOARD
+-----------
+
+import React, { useState } from "react";
+import "./index.css"
+
+export default function KanbanBoard() { 
+
+	let [tasks, setTasks] = React.useState([])
+
+	let [stagesNames, setStagesNames] = React.useState(['Backlog', 'To Do', 'Ongoing', 'Done']);
+
+	const [newTask,setNewTask]=useState('')
+
+
+
+
+	let stagesTasks = [];
+	for (let i = 0; i < stagesNames.length; ++i) {
+		stagesTasks.push([]);
+	}
+
+
+	const clickHandler =()=>{
+
+		if(newTask.trim()===''){
+			return;
+		}
+
+			
+				const newTaskObj = {
+					id: Date.now(), 
+					name: newTask,
+					stage: 0
+				};
+
+		  
+		  setTasks([...tasks,newTaskObj])
+
+		  setNewTask("");
+		
+
+			
+	}
+
+		const clickForward =(index,task)=>{
+
+		      if(index+1<stagesTasks.length){
+					setTasks(prevTasks =>
+						prevTasks.map(t =>
+							t.id === task.id ? { ...t, stage: index + 1 } : t
+						)
+						);
+			}
+	    }
+
+     const clickBackWard =(index, task)=>{
+
+			if(index>0){
+				setTasks (prevTasks=>
+					prevTasks.map(t =>
+						t.id===task.id ?{...t,stage:index-1}:t
+					)
+				)
+			}
+		   
+	}
+
+	const deleteHandler =(id)=>{
+           
+		setTasks ( prevTasks =>
+			prevTasks.filter(task=>task.id!==id)
+		)
+	}
+
+		for (let task of tasks) {
+					const stageId = task.stage;
+					stagesTasks[stageId].push(task);
+	    }
+
+
+
+
+	return (
+		<div className="mt-20 layout-column justify-content-center align-items-center">
+			<section className="mt-50 layout-row align-items-center justify-content-center">
+				<input id="create-task-input" type="text" className="large" placeholder="New task name" data-testid="create-task-input" onChange={(e)=>setNewTask(e.target.value)} value={newTask}  />
+				<button type="submit" className="ml-30" data-testid="create-task-button" onClick={clickHandler}>Create task</button>
+			</section>
+
+			<div className="mt-50 layout-row">
+				{stagesTasks.map((tasks, i) => {
+					return (
+						<div className="card outlined ml-20 mt-0" key={`${i}`}>
+							<div className="card-text">
+								<h4>{stagesNames[i]}</h4>
+								<ul className="styled mt-50" data-testid={`stage-${i}`}>
+									{tasks.map((task, index) => {
+										return <li className="slide-up-fade-in" key={`${i}${index}`}>
+											<div className="li-content layout-row justify-content-between align-items-center">
+												<span data-testid={`${task.name.split(' ').join('-')}-name`}>{task.name}</span>
+												<div className="icons">
+											    <button disabled={i===0} className="icon-only x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-back`} onClick={ ()=>clickBackWard(i,task)}>
+														<i className="material-icons">arrow_back</i>
+													</button>
+													<button  disabled={i===3}className="icon-only x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-forward`} onClick={()=>clickForward(i,task)} >
+														<i className="material-icons">arrow_forward</i>
+													</button>
+													<button className="icon-only danger x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-delete`} onClick={()=>deleteHandler(task.id)}>
+														<i className="material-icons">delete</i>
+													</button>
+												</div>
+											</div>
+										</li>
+									})}
+								</ul>
+							</div>
+						</div>
+					)
+				})}
+			</div>
+		</div>
+	)
+}
+
+
+
+_________________________
+
+10 : JOB APPLICATION 
+
+_______________
+
+import React, { useState } from "react";
+import "./App.css";
+import "h8k-components";
+import JobApplicationForm from "./components/JobApplicationForm";
+import Preview from "./components/Preview";
+import SuccessMessage from "./components/SuccessMessage";
+
+const title = "Job Application Portal";
+
+const App = () => {
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    experience: ''
+  });
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    experience: ''
+  });
+
+  const [isForm, setForm] = useState(true);
+  const [isPreview, setPreview] = useState(false);
+  const [isSuccess, setSuccess] = useState(false);
+
+
+  const validate = (isClear) => {
+    if (isClear) {
+      setErrors({
+        name: '',
+        email: '',
+        experience: ''
+      });
+      return false;
+    }
+    let isValid = true;
+    const newErrors = { name: '', email: '', experience: '' };
+
+
+    if (!formData.name) {
+      newErrors.name = "Name is required.";
+      isValid = false;
+    }
+
+    const simpleEmailPattern = /.+@.+\..+/;
+    /**
+     * Explanation
+      .+: Ensures there is at least one character before the @ symbol.
+      @: Requires the presence of the @ symbol.
+      .+: Ensures there is at least one character after the @ symbol.
+      \.: Requires at least one dot (.) in the domain.
+      .+: Ensures at least one character after the dot.
+     */
+    let email = formData.email;
+
+    // Check conditions
+    const hasAtSymbol = email.includes('@');
+    const hasDotAfterAt = hasAtSymbol && email.indexOf('.', email.indexOf('@')) > email.indexOf('@');
+    const hasCharactersBeforeAt = email.indexOf('@') > 0;
+
+    const isValidEmail = hasAtSymbol && hasCharactersBeforeAt && hasDotAfterAt;
+
+    if (!formData.email || !isValidEmail) {
+      newErrors.email = "Enter a valid email address.";
+      isValid = false;
+    }
+
+
+    if (!formData.experience || Number(formData.experience) < 0) {
+      newErrors.experience = "Experience must be a positive number.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+  return (
+    <div className="App pt-30 ma-auto" data-testid="app">
+      <h8k-navbar header={title}></h8k-navbar>
+      {
+        isForm && <JobApplicationForm
+          formData={formData}
+          setFormData={setFormData}
+          setForm={setForm}
+          setPreview={setPreview}
+          setSuccess={setSuccess}
+          validate={validate}
+          errors={errors}
+
+        />
+      }
+      {
+        isPreview && <Preview
+          setForm={setForm}
+          setPreview={setPreview}
+          setSuccess={setSuccess}
+          setFormData={setFormData}
+          formData={formData}
+          validate={validate}
+          error={errors}
+
+
+        />
+      }
+      {
+        isSuccess && <SuccessMessage
+          setFormData={setFormData}
+          setForm={setForm}
+          setSuccess={setSuccess}
+          validate={validate}
+          error={errors}
+
+        />
+      }
+    </div>
+  );
+};
+
+export default App;
+
+_________________
+
+import React from "react";
+
+const JobApplicationForm = ({formData,setFormData,setForm,setPreview,setSuccess,validate,errors}) => {
+  
+  const handleChange=(e)=>{
+    const {name,value}=e.target;
+    setFormData({...formData,[name]:value});
+  }
+  const handleReset=(e)=>{
+    e.preventDefault();
+    setFormData({
+      name:'',
+      email:'',
+      experience:''
+    });
+    validate(true);
+  }
+  const handlePreview=(e)=>{
+     e.preventDefault();  
+   
+    if( validate(false)){
+       setPreview(true);
+       setForm(false);
+       setSuccess(false);
+    }
+    
+  }
+  return (
+    <form data-testid="job-application-form" className="layout-column ml-auto">
+      <h2 className="ma-auto pa-20">Provide your details</h2>
+      <div>
+        <label className="font-weight-bold">
+          Name:
+          <input
+            data-testid="input-name"
+            type="text"
+            name="name"
+            value={formData.name}
+            className="pa-10 ml-120"
+            onChange={handleChange}
+          />
+        </label>
+       {errors.name!=="" &&<p data-testid="error-name" className="error">
+          {errors.name}
+        </p>}
+      </div>
+      <div>
+        <label className="font-weight-bold">
+          Email:
+          <input
+            data-testid="input-email"
+            type="email"
+            name="email"
+            value={formData.email}
+            className="pa-10 ml-120"
+             onChange={handleChange}
+          />
+        </label>
+        {errors.email!=="" &&<p data-testid="error-email" className="error">
+          {errors.email}
+        </p>}
+      </div>
+      <div>
+        <label className="font-weight-bold">
+          Experience (years):
+          <input
+            data-testid="input-experience"
+            type="text"
+            name="experience"
+            value={formData.experience}
+            className="pa-10 ml-20"
+             onChange={handleChange}
+          />
+        </label>
+        {errors.experience!=="" &&<p data-testid="error-experience" className="error">
+          {errors.experience}
+        </p>}
+      </div>
+      <div className="ml-100">
+        <button data-testid="preview-button" type="submit" className="mx-50"
+         onClick={handlePreview}
+        >
+          Preview
+        </button>
+        <button data-testid="reset-button" type="button" className="mx-50"
+         onClick={handleReset}
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default JobApplicationForm;
+
+---------------
+
+import React from "react";
+
+const Preview = ({ setForm, setPreview, setSuccess, setFormData,formData ,validate}) => {
+
+  const handleClear = (e) => {
+    e.preventDefault();
+    setPreview(false);
+    setForm(true);
+    setFormData({
+      name: '',
+      email: '',
+      experience: ''
+    })
+    validate(true);
+  }
+  const handleSubmit=(e)=>{
+       e.preventDefault();
+       setPreview(false);
+       setSuccess(true);
+  }
+  return (
+    <div data-testid="preview">
+      <h2>Preview Your Application</h2>
+      <p data-testid="preview-name">
+        <strong>Name:</strong> {formData.name}
+      </p>
+      <p data-testid="preview-email">
+        <strong>Email:</strong> {formData.email}
+      </p>
+      <p data-testid="preview-experience">
+        <strong>Experience:</strong> {formData.experience} years
+      </p>
+      <button data-testid="clear-button"
+        onClick={handleClear}
+      >Clear</button>
+      <button data-testid="submit-button" onClick={handleSubmit}>Submit</button>
+    </div>
+  );
+};
+
+export default Preview;
+
+------------------------
+
+import React from "react";
+
+const SuccessMessage = ({ setForm, setFormData,setSuccess,validate }) => {
+  const handleHome = (e) => {
+    setFormData({
+      name: '',
+      email: '',
+      experience: ''
+    })
+    setForm(true);
+    setSuccess(false);
+    validate(true);
+  }
+  return (
+    <div data-testid="success-message">
+      <h2>Application Submitted Successfully!</h2>
+      <p>Thank you for your application. We will review it soon.</p>
+      <button className="ma-auto" data-testid="reset-button"
+        onClick={handleHome}>
+        Home
+      </button>
+    </div>
+  );
+};
+
+export default SuccessMessage;
+
+_______________________________________
+
+11: IMAGE PREVIEW 
+
+_______
+
+import React from "react";
+import "./App.css";
+import "h8k-components";
+import ImagePreview from "./components/ImagePreview";
+import { data } from "./data";
+
+const title = "React Image Preview";
+
+const App = () => {
+  return (
+    <div className="App">
+      <h8k-navbar header={title} />
+      <ImagePreview images={data} />
+    </div>
+  );
+};
+
+export default App;
+
+
+______________
+
+
+import React, { useState } from "react";
+import HiddenImageDiv from "./HiddenImageDiv";
+const ImagePreview = ({ images }) => {
+  const [image, setImage]=useState(images);
+
+  const handleHide = () => {
+       
+      const updatedImage= image.map( (i)=>({
+         ...i,
+         visible:false
+
+      }))
+
+      setImage(updatedImage);
+  }
+
+  const showAllHandler =()=>{
+        
+       const updatedImage=image.map ( (i)=>({
+            ...i,
+            visible:true
+       }))
+
+       setImage(updatedImage);
+  }
+
+  const imageView =(imageId)=>{
+        
+       const updatedImage =image.map ((i) =>i.id===imageId ? {...i ,visible:!i.visible} :i);
+       setImage(updatedImage);
+       
+  }
+  return (
+    <div className="layout align-items-center mt-100">
+      <div className="card ma-20 pa-50">
+        <section>
+          <div
+            className="layout-row justify-content-around"
+            data-testid="images-div"
+          >
+
+
+            {
+              image.map(({ src, id, alt, visible }) => {
+
+                 return visible ? <img key={id} src={src} height={200} width={300} alt={alt}  onClick={()=>imageView(id)} /> 
+                 :<HiddenImageDiv key={id} onClick={()=>imageView(id)}/>
+               
+              })
+            }
+
+
+
+          </div>
+        </section>
+        <section className="card-actions justify-content-center">
+          <button data-testid="show-all-btn"  onClick={showAllHandler} >Show all</button>
+          <button className="danger" data-testid="hide-all-btn" onClick={handleHide}>
+            Hide all
+          </button>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default ImagePreview;
+
+___________
+
+import React from "react";
+
+const HiddenImageDiv = (props) => {
+  return (
+    <div className="empty" {...props}>
+      Hidden Image
+    </div>
+  );
+};
+
+export default HiddenImageDiv;
+
+_______________________
+
+
+12 : HACKER SHOPPING CART-NORMAL
+
+---
+
+import React, { Component } from 'react';
+import './App.css';
+import ProductList from "./components/product-list";
+import Cart from "./components/cart";
+import 'h8k-components';
+
+const title = "HackerShop";
+
+class App extends Component {
+    constructor() {
+        super();
+        const products = [...PRODUCTS].map((product, index) => {
+            product.id = index + 1;
+            product.image = `/images/items/${product.name.toLocaleLowerCase()}.png`;
+            product.cartQuantity = 0;
+            return product;
+        });
+        this.state = {
+            cart: {
+                items: [],
+                subTotal: 0,
+                totalPrice: 0,
+                discount: 0,
+                selectedCoupon: '0'
+            },
+            products
+        }
+        this.addToCart = this.addToCart.bind(this);
+        this.removeFromCart = this.removeFromCart.bind(this);
+    }
+
+    addToCart(index) {
+        const products = [...this.state.products];//changes
+        products[index].cartQuantity = 1;
+        let cart = { ...this.state.cart };
+        cart.items.push({
+            id: products[index].id,
+            price: products[index].price,
+            item: products[index].heading,
+            quantity: 1
+        });
+        //Added this to calculate total and discount
+        cart.subTotal = this.calculateSubTotal(cart.items);
+        cart.discount = this.calculateDiscount(cart.subTotal, cart.selectedCoupon);
+        cart.totalPrice = cart.subTotal - cart.discount;
+        this.setState({
+            products,
+            cart
+        })
+    }
+
+
+    removeFromCart(index) {
+        const products = [...this.state.products];//changes
+        products[index].cartQuantity = 0;
+        let cart = { ...this.state.cart };
+        let cartIndex = this.state.cart.items.findIndex(item => item.id === products[index].id);
+        cart.items.splice(cartIndex, 1);
+
+        //Added this to calculate total and discount
+        cart.subTotal = this.calculateSubTotal(cart.items);
+        cart.discount = this.calculateDiscount(cart.subTotal, cart.selectedCoupon);
+        cart.totalPrice = cart.subTotal - cart.discount;
+
+        this.setState({
+            cart,
+            products
+        })
+    }
+
+
+    calculateSubTotal(items) {
+        return items.reduce((sum, item) => sum + item.price, 0);
+    }
+
+    calculateDiscount(subTotal, couponValue) {
+        return (subTotal * parseInt(couponValue)) / 100;
+    }
+    // added this method
+    handleCouponChange = (e) => {
+        let cart = { ...this.state.cart };
+        cart.selectedCoupon = e.target.value;
+        cart.discount = this.calculateDiscount(cart.subTotal, cart.selectedCoupon);
+        cart.totalPrice = cart.subTotal - cart.discount;
+        this.setState({ cart });
+    };
+
+
+
+    render() {
+
+        return (
+            <div>
+                <h8k-navbar header={title}></h8k-navbar>
+                <div className="layout-row shop-component">
+                    <ProductList products={this.state.products}
+                        addToCart={this.addToCart}
+                        removeFromCart={this.removeFromCart}
+                    />
+                    <Cart cart={this.state.cart}
+                        onCouponChange={this.handleCouponChange}
+                    />
+                </div>
+            </div>
+        );
+    }
+}
+
+export const PRODUCTS = [
+    {
+        heading: "Cap - $10",
+        name: "Cap",
+        price: 10
+    },
+    {
+        heading: "Hand Bag - $30",
+        name: "HandBag",
+        price: 30
+    },
+    {
+        heading: "Shirt - $30",
+        name: "Shirt",
+        price: 30
+    },
+    {
+        heading: "Shoes - $50",
+        name: "Shoe",
+        price: 50
+    },
+    {
+        heading: "Pant - $40",
+        name: "Pant",
+        price: 40
+    },
+    {
+        heading: "Slipper - $20",
+        name: "Slipper",
+        price: 20
+    }
+];
+export default App;
+
+----------
+
+import React, {Component} from "react";
+import "./index.css";
+
+export default class ProductList extends Component {
+    constructor() {
+        super();
+    }
+
+    render() {
+        const {products,addToCart,removeFromCart}=this.props;
+        
+        console.log(products);
+        return (
+            <div className="layout-row wrap justify-content-center flex-70 app-product-list">
+                {products.map((product, i) => {
+                    return (
+                        <section className="w-30"
+                                 data-testid={'product-item-' + i}
+                                 key={product.id}>
+                            <div className="card ma-16">
+                                <img alt="Your Cart" src={product.image}
+                                     className="d-inline-block align-top product-image"/>
+                                <div className="card-text pa-4">
+                                    <h5 className="ma-0 text-center">{product.name}</h5>
+                                    <p className="ma-0 mt-8 text-center">${product.price}</p>
+                                </div>
+                                <div className="card-actions justify-content-center pa-4">
+                                {  product.cartQuantity===0 ? ( <button className="x-small outlined" data-testid="btn-item-add"
+                                    onClick={()=>addToCart(i)}
+                                >
+                                        Add To Cart
+                                    </button>):
+
+                                  (  <button className="x-small danger" data-testid="btn-item-remove"
+                                     onClick={()=>removeFromCart(i)}
+                                  >
+                                        Remove
+                                    </button>)
+                                }
+                                </div>
+                            </div>
+                        </section>
+                    )
+                })}
+
+            </div>
+
+        );
+    }
+}
+
+--------------
+
+import React, {Component} from "react";
+import "./index.css";
+
+
+export default class Cart extends Component {
+
+    render() {
+        const {onCouponChange}=this.props;
+        return (
+            <div className="card outlined my-16 mr-25 flex-30">
+                <section className="layout-row align-items-center justify-content-center px-16">
+                    <h4>Your Cart</h4>
+                </section>
+                <div className="divider"/>
+                <table>
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Item</th>
+                        <th className="numeric">Quantity</th>
+                        <th className="numeric">Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        this.props.cart.items.map((cartItem, idx) => {
+                            return (
+                                <tr data-testid={'cart-item-' + idx}
+                                    key={idx + 1}
+                                    className="slide-up-fade-in">
+                                    <td>{idx + 1}.</td>
+                                    <td className="name" data-testid="cart-item-name">{cartItem.item}</td>
+                                    <td className="numeric quantity" data-testid="cart-item-quantity">
+                                        {cartItem.quantity}
+                                    </td>
+                                    <td className="numeric quantity" data-testid="cart-item-price">
+                                        {cartItem.price}
+                                    </td>
+                                </tr>
+                            )
+                        })
+                    }
+
+                    </tbody>
+                </table>
+                <div className="layout-row justify-content-between align-items-center px-8 mx-12">
+                    <h5>Select Coupon</h5>
+                    <select data-testid="cart-coupon"
+                            className="coupon-select" onChange={onCouponChange}>
+                        <option value="0">None</option>
+                        <option value="10">OFF10</option>
+                        <option value="20">OFF20</option>
+                    </select>
+                </div>
+                <ul className="bordered inset ma-0 px-8 mt-30">
+                    <li className="layout-row justify-content-between py-12 caption font-weight-light">
+                        <span>Subtotal</span>
+                        <span data-testid="cart-subtotal">${this.props.cart.subTotal}</span>
+                    </li>
+                    <li className="layout-row justify-content-between py-12 caption font-weight-light">
+                        <span>Discount (-)</span>
+                        <span className="discount" data-testid="cart-discount">${this.props.cart.discount}</span>
+                    </li>
+                    <li className="layout-row justify-content-between py-12 font-weight-bold">
+                        <span>Total</span>
+                        <span data-testid="cart-total">${this.props.cart.totalPrice}</span>
+                    </li>
+                </ul>
+            </div>
+
+        );
+    }
+}
+
+_________________________________
+
+13: SHOPPING CART-WITH STOCK
+
+-----------
+
+import React, {Component} from 'react';
+import './App.css';
+import 'h8k-components';
+import ProductList from "./components/product-list";
+import Cart from "./components/cart";
+
+const title = "HackerShop";
+
+class App extends Component {
+    constructor() {
+        super();
+        const products = [...PRODUCTS].map((product, index) => {
+            product.id = index + 1;
+            product.image = `/images/items/${product.name.toLocaleLowerCase()}.png`;
+            product.cartQuantity = 0;
+            return product;
+        });
+        this.state = {
+            cart: {
+                items: []
+            },
+            products
+        }
+    }
+
+
+
+  addToCart = (productId) => {
+    this.setState((prevState) => {
+      const products = prevState.products.map((p) => {
+        if (p.id === productId) {
+          p.cartQuantity = 1;
+        }
+        return p;
+      });
+
+      const addedProduct = products.find((p) => p.id === productId);
+      const cart = {
+        items: [
+          ...prevState.cart.items,
+          { id: productId, item: addedProduct.name, quantity: 1 },
+        ],
+      };
+
+      return { products, cart };
+    });
+  };
+
+  updateQuantity = (productId, mode) => {
+    this.setState((prevState) => {
+      let products = prevState.products.map((p) => {
+        if (p.id === productId) {
+          if (mode === "add") {
+            p.cartQuantity += 1;
+          } else if (mode === "subtract") {
+            p.cartQuantity -= 1;
+          }
+        }
+        return p;
+      });
+
+      let cartItems = [...prevState.cart.items];
+      const idx = cartItems.findIndex((item) => item.id === productId);
+
+      if (idx > -1) {
+        if (mode === "add") {
+          cartItems[idx].quantity += 1;
+        } else if (mode === "subtract") {
+          cartItems[idx].quantity -= 1;
+          if (cartItems[idx].quantity === 0) {
+            cartItems.splice(idx, 1);
+          }
+        }
+      }
+
+      return {
+        products,
+        cart: { items: cartItems },
+      };
+    });
+  };
+
+
+
+    render() {
+
+
+        return (
+            <div>
+                <h8k-navbar header={title}></h8k-navbar>
+                <div className="layout-row shop-component">
+                    <ProductList products={this.state.products} addToCart={this.addToCart} updateQuantity={this.updateQuantity}/>
+                    <Cart cart={this.state.cart}/>
+                </div>
+            </div>
+        );
+    }
+}
+
+export const PRODUCTS = [
+    {
+        name: "Cap",
+        price: 5
+    },
+    {
+        name: "HandBag",
+        price: 30
+    },
+    {
+        name: "Shirt",
+        price: 35
+    },
+    {
+        name: "Shoe",
+        price: 50
+    },
+    {
+        name: "Pant",
+        price: 35
+    },
+    {
+        name: "Slipper",
+        price: 25
+    }
+];
+export default App;
+
+--------
+
+import React, {Component} from "react";
+import "./index.css";
+
+export default class ProductList extends Component {
+    render() {
+
+
+        return (
+            <div className="layout-row wrap justify-content-center flex-70 app-product-list">
+                {this.props.products.map((product, i) => {
+                    return (
+                        <section className="w-30"
+                                 data-testid={'product-item-' + i}
+                                 key={product.id}>
+                            <div className="card ma-16">
+                                <img alt="Your Cart" src={product.image}
+                                     className="d-inline-block align-top product-image"/>
+                                <div className="card-text pa-4">
+                                    <h5 className="ma-0 text-center">{product.name}</h5>
+                                    <p className="ma-0 mt-8 text-center">${product.price}</p>
+                                </div>
+                                <div className="card-actions justify-content-center pa-4">
+
+                                 { product.cartQuantity  ===0  ? ( <button className="x-small outlined" data-testid="btn-item-add"  onClick={ ()=>this.props.addToCart(product.id)}>
+                                        Add To Cart
+                                    </button>) :(
+
+                                    <div className="layout-row justify-content-between align-items-center">
+                                        <button className="x-small icon-only outlined"
+                                                data-testid="btn-quantity-subtract" onClick={()=>this.props.updateQuantity(product.id,"subtract")}>
+                                            <i className="material-icons">remove</i>
+                                        </button>
+
+                                        <input type="number"
+                                               disabled
+                                               className="cart-quantity" value={product.cartQuantity} data-testid="cart-quantity"/>
+
+                                        <button className="x-small icon-only outlined"
+                                                data-testid="btn-quantity-add" onClick={()=>this.props.updateQuantity(product.id,"add")}>
+                                            <i className="material-icons">add</i>
+                                        </button>
+                                    </div>
+                                    )}
+
+                                </div>
+                            </div>
+                        </section>
+                    )
+                })}
+
+            </div>
+
+        );
+    }
+}
+
+export const UpdateMode = {
+    ADD: 1,
+    SUBTRACT: 0
+}
+
+
+---------------
+
+import React, {Component} from "react";
+import "./index.css";
+
+export default class Cart extends Component {
+
+    render() {
+        return (
+            <div className="card my-16 mr-25 flex-30">
+                <section className="layout-row align-items-center justify-content-center px-16">
+                    <h4>Your Cart</h4>
+                </section>
+                <div className="divider"/>
+                <table>
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Item</th>
+                        <th className="numeric">Quantity</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        this.props.cart.items.map((cartItem, idx) => {
+                            return (
+                                <tr data-testid={'cart-item-' + idx}
+                                    key={idx + 1}
+                                    className="slide-up-fade-in">
+                                    <td>{idx + 1}.</td>
+                                    <td className="name" data-testid="cart-item-name">{cartItem.item}</td>
+                                    <td className="numeric quantity" data-testid="cart-item-quantity">
+                                        {cartItem.quantity}
+                                    </td>
+                                </tr>
+                            )
+                        })
+                    }
+
+                    </tbody>
+                </table>
+            </div>
+
+        );
+    }
+}
+
+-------------------
+
+14: HACKER MAP
+----------------
+
+import React, {Component} from 'react';
+import Navigation from './components/Navigation';
+import './App.css';
+
+const title = "HackerMaps";
+const locations = [
+    'Lombard St, San Francisco, CA, USA',
+    'PIER 39, The Embarcadero, San Francisco, CA, USA',
+    'Golden Gate Bridge, San Francisco, CA, USA',
+    `Fisherman's Wharf, San Francisco, CA, USA`,
+    'Alcatraz Island, San Francisco, CA, USA'
+];
+
+class App extends Component {
+
+    constructor() {
+        super();
+        this.locations = [...locations];
+    }
+
+    render() {
+        return (
+            <div className="App">
+                <h8k-navbar header={title}></h8k-navbar>
+                <Navigation locations={this.locations}/>
+            </div>
+        );
+    }
+}
+
+export default App;
+_____________________
+
+import React, { Component } from "react";
+import './Navigation.css';
+
+export default class Navigation extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            locations: [...props.locations],
+        };
+    }
+
+    // Used for rendering
+    getClasses(ctx, index) {
+        let classes = `material-icons ${ctx}`;
+        if (ctx === 'dots') {
+            if (this.isLast(index)) {
+                classes += ' hidden';
+            }
+        } else {
+            classes += this.isLast(index) ? ' small' : ' x-small';
+            if (index === 0) {
+                classes += ' first';
+            }
+        }
+        return classes;
+    }
+
+    // Used for rendering
+    isLast(index) {
+        return index === this.props.locations.length - 1;
+    }
+
+    moveUp(index){
+        if(index===0)return;
+        this.setState((prev)=>{
+            const arr=[...prev.locations];
+            [arr[index-1],arr[index]]=[arr[index],arr[index-1]];
+            return {locations:arr};
+        });
+    }
+
+    moveDown(index){
+        if(index===this.state.locations.length-1)return;
+
+        this.setState((prev)=>{
+            const arr=[...prev.locations];
+            [arr[index+1],arr[index]]=[arr[index],arr[index+1]];
+            return {locations:arr};
+        });
+    }
+
+
+    render() {
+        const { locations } = this.state;
+        return (
+            <div className="layout-row align-items-center justify-content-center navigation-screen">
+                <div className="card layout-row flat map-card">
+                    <section className="card pb-16 pr-16 flex-auto layout-column justify-content-center">
+                        <ul className="pl-0" data-testid="location-list">
+
+
+                            {
+                                locations.map((location, index) => (
+                                    <li key={'row' + index} data-testid={'location-' + index}
+                                        className="layout-row justify-content-between align-items-center mr-8 pl-40 relative">
+                                        <div className="layout-column justify-content-start align-items-center handle">
+                                            <i className={this.getClasses('marker', index)}>{this.isLast(index) ? 'room' : 'radio_button_checked'}</i>
+                                            <i className={this.getClasses('dots', index)}>more_vert</i>
+                                        </div>
+                                        <div className="location-name">
+                                            <p className="caption text-start mb-4" data-testid="location">{location}</p>
+                                        </div>
+
+                                        <div>
+
+                                            {
+                                                index !== 0 && (<button 
+                                                className="icon-only small mx-0" 
+                                                data-testid="up-button"
+                                                onClick={()=>this.moveUp(index)}
+                                                >
+                                                    <i className="material-icons">arrow_upward</i>
+                                                </button>)
+                                            }
+
+                                            {
+                                                !this.isLast(index) && (<button className="icon-only small mx-0" data-testid="down-button"
+                                                 onClick={()=>this.moveDown(index)}
+                                                >
+                                                    <i className="material-icons">arrow_downward</i>
+                                                </button>)
+                                            }
+
+
+
+
+                                        </div>
+                                    </li>
+                                ))
+                            }
+                        </ul>
+                    </section>
+                    <section className="flex-auto">
+                        <img src="images/map.svg" className="fill" alt="map" />
+                    </section>
+                </div>
+
+            </div>
+        );
+    }
+}
+
+_____________________
+
+15 : HACKER BANK
+
+____________
+
+import React, { use, useState } from "react";
+
+function TransactionTable({ txns }) {
+
+  console.log(txns);
+  const [inputDate,setInputDate]=useState("2019-11-29");
+  const [filterDate,setFilterDate]=useState("");
+  const [sortAscending,setSortAscending]=useState(null);
+
+  
+  const applyFilter=()=>{
+      setFilterDate(inputDate);
+      console.log(inputDate);
+  }
+
+  const toggleSort=()=>{
+    setSortAscending((prev)=>(prev===null)?true :!prev);
+  }
+
+  const getDisplayedTxns=()=>{
+    let displayed =[...txns];
+
+    if(filterDate){
+      displayed=displayed.filter((txn)=>{
+        return txn.date === filterDate;
+      });
+    }
+
+    if(sortAscending!==null){
+        displayed.sort((a,b)=>{
+         return  sortAscending ? Number(a.amount)-Number(b.amount):Number(b.amount)-Number(a.amount);
+        });
+    }
+    return displayed;
+  }
+
+  const filteredData=getDisplayedTxns();
+
+  return (
+    <div className="layout-column align-items-center mt-50">
+      <section className="layout-row align-items-center justify-content-center">
+        <label className="mr-10">Transaction Date</label>
+        <input
+          id="date"
+          type="date"
+          defaultValue="2019-11-29"
+          onChange={(e)=>setInputDate(e.target.value)}
+          role="search"
+        />
+        <button className="small" onClick={applyFilter}>Filter</button>
+      </section>
+
+      <div className="card mt-50">
+        <table className="table">
+          <thead>
+            <tr className="table">
+              <th className="table-header">Date</th>
+              <th className="table-header">Description</th>
+              <th className="table-header">Type</th>
+              <th className="table-header">
+                <span id="amount" onClick={toggleSort} role="button">
+                  Amount ($)
+                </span>
+              </th>
+              <th className="table-header">Available Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+           {
+            filteredData.map((t,index)=>(
+             <tr key={index}>
+              <td>{t.date}</td>
+              <td>{t.description}</td>
+              <td>{t.type===1?'Debit':'Credit'}</td>
+              <td>{t.amount}</td>
+              <td>{t.balance}</td>
+            </tr>
+            ))
+           }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default TransactionTable;
+
+____________
+
+16 : FITNESS TRACKER 
+
+import React, { useState } from "react";
+import LogForm from "./LogForm";
+import LogList from "./LogList";
+
+const FitnessTracker = () => {
+  const [data,setData]=useState([]);
+  return (
+    <div className="pa-20">
+      <h1>Track Your Fitness</h1>
+      <LogForm data={data} setData={setData}/>
+      <LogList data={data}/>
+    </div>
+  );
+};
+
+export default FitnessTracker;
+
+____________
+
+import React, { useState } from "react";
+
+
+
+const LogForm = ({data,setData}) => {
+
+  const [exercise,setExercise]=useState('');
+  const [duration,setDuration]=useState("");
+  const [caloriesBurned,setCaloriesBurned]=useState("");
+
+  const [error,setError]=useState({
+     exercise:"",
+     duration:"",
+     caloriesBurned:""
+  })
+
+const validate = () => {
+  const newErrors = {};
+
+  if (!exercise.trim()) {
+    newErrors.exercise = "Exercise type must not be empty.";
+   
+  }
+
+else if ( !duration.trim() || Number(duration) < 0) {
+    newErrors.duration = "Duration must be a positive number.";
+   
+  }
+else  if (!caloriesBurned.trim() || Number(caloriesBurned) < 0) {
+    newErrors.caloriesBurned = "Calories must be a positive number.";
+  }
+
+  setError(newErrors);
+
+  return Object.keys(newErrors).length === 0;
+};
+
+
+  const handleSubmit=(e)=>{
+       e.preventDefault();
+       if( validate()){
+
+        const newData={
+             exercise,
+             duration,
+             caloriesBurned
+        }
+        setData([...data,newData ]);
+
+          setExercise("")
+          setCaloriesBurned("")
+          setDuration("")
+
+          
+    setError({
+      exercise: "",
+      duration: "",
+      caloriesBurned: "",
+    });
+
+          
+  }
+
+
+       
+  }
+
+
+  const handleReset =()=>{
+     
+ 
+  setError({
+    exercise: "",
+    duration: "",
+    caloriesBurned: "",
+  });
+  setCaloriesBurned("")
+  setExercise("")
+  setDuration("")
+
+    setData([]);
+  }
+
+
+  return (
+    <div className="layout column justify-content-center align-items-center">
+      <form data-testid="log-form" onSubmit={handleSubmit}>
+        <div className="mb-10">
+          <label>
+            Exercise Type:
+            <input
+              type="text"
+              name="exerciseType"
+              value={exercise}
+              placeholder="e.g., Running"
+              className="ml-50"
+              data-testid="input-exerciseType"
+              onChange={(e)=>setExercise(e.target.value)}
+
+            />
+
+             {  error.exercise &&    < p data-testid="error-message" style={{ color: "red" }}>
+               {error.exercise}
+            </p>}
+   
+          </label>
+        </div>
+        <div className="mb-10">
+          <label>
+            Duration (minutes):
+            <input
+              type="number"
+              name="duration"
+              value={duration}
+              placeholder="e.g., 30"
+              className="ml-10"
+              data-testid="input-duration"
+              onChange={(e)=>setDuration(e.target.value)}
+            />
+
+      {  error.duration &&    < p data-testid="error-message" style={{ color: "red" }}>
+        {error.duration}
+      </p>}
+          </label>
+        </div>
+        <div className="mb-10">
+          <label>
+            Calories Burned:
+            <input
+              type="number"
+              name="caloriesBurned"
+              value={caloriesBurned}
+              placeholder="e.g., 300"
+              className="ml-30"
+              data-testid="input-caloriesBurned"
+              onChange={(e)=>setCaloriesBurned(e.target.value)}
+            />
+          </label>
+
+                 {  error.caloriesBurned &&    < p data-testid="error-message" style={{ color: "red" }}>
+        {error.caloriesBurned}
+      </p>}
+    
+        </div>
+        <button type="submit" data-testid="btn-logActivity" className="mr-10" >
+          Log Activity
+        </button>
+        <button type="button" data-testid="btn-resetLog" onClick={handleReset}>
+          Reset Log
+        </button>
+      </form>
+
+    </div>
+  );
+};
+
+export default LogForm;
+
+-------------
+
+
+
+
+import React from "react";
+import "../App.css";
+
+const LogList = ({data}) => {
+  return (
+    <div data-testid="log-list">
+      <h2>Activity Log</h2>
+       {  data.length ===0 ? (  <p>No activities logged yet.</p>) :( <ul className="pl-0 log-entry-ul">
+           {
+            data.map( (list, index)=>(
+             <li data-testid="log-entry"  key={index} className="log-entry-li mb-10 pa-10">
+                  <p>
+                    <strong>Exercise:</strong> {list.exercise}
+                </p>
+                <p>
+                  <strong>Duration:</strong> {list.duration} minutes
+                </p>
+                <p>
+                  <strong>Calories Burned:</strong> {list.caloriesBurned} kcal
+                </p>
+           </li>
+            ))
+           }
+      </ul>) }
+     
+     
+    </div>
+  );
+};
+
+export default LogList;
+
+
+
+_________________________
+
+17: EXPENSE TRACKER 
+
+_______________
+
+import React, { useState } from 'react'
+import IncomeForm from './IncomeForm'
+import ExpenseForm from './ExpenseForm'
+import Summary from './Summary'
+
+const ExpenseTracker = () => {
+    const [income,setIncome]=useState(0);
+    const [expense,setExpense]=useState(0);
+    const balance=income-expense;
+   
+  return (
+    <div>
+      <IncomeForm income={income} setIncome={setIncome}/>
+      <ExpenseForm income={income} expense={expense} setExpense={setExpense} />
+      <Summary income={income} expense={expense} balance={balance}/>
+    </div>
+  )
+}
+
+export default ExpenseTracker
+
+----------
+
+import React, { useState } from 'react'
+
+const IncomeForm = ({ income, setIncome }) => {
+    const [localIncome, setLocalIncome] = useState(0);
+
+    const addIncomeSubmit = (e) => {
+        console.log(e.target);
+        setIncome(Number(income)+Number(localIncome));
+        setLocalIncome('');
+    }
+
+    return (
+        <div>
+            <h4>Income Form</h4>
+            <input type="number"
+                name="income"
+                placeholder='enter your income'
+                value={localIncome}
+                onChange={(e) => setLocalIncome(e.target.value)}
+            />
+            <button onClick={addIncomeSubmit}>Add Income</button>
+
+        </div>
+    )
+}
+
+export default IncomeForm
+
+-----------------------
+
+import React, { useState } from 'react'
+
+const ExpenseForm = ({ income, expense, setExpense }) => {
+
+    const [localExpense, setLocalExpense] = useState(0);
+   
+    const addExpenseSubmit = (e) => {
+        e.preventDefault();
+
+        const  formData=new FormData(e.target);
+        const data=Object.fromEntries(formData);
+        console.log(data);
+         console.log(formData);
+
+        // Updated condition: Check if income is greater than or equal to total expenses
+        const totalExpense=expense + Number(data.expense);
+        console.log(totalExpense);
+        if (income >= totalExpense) {
+            setExpense(Number(expense) + Number(localExpense));
+        } else {
+            console.log('Insufficient income');
+        }
+
+        setLocalExpense('');
+    }
+
+    return (
+        <div>
+            <h4>Expense Form</h4>
+            <form onSubmit={addExpenseSubmit}>
+                <input type="number" 
+                       name="expense" 
+                       placeholder='Enter your expense'
+                       value={localExpense}
+                       onChange={(e) => setLocalExpense(e.target.value)}
+                />
+                <button type='submit'>Add Expense</button>
+            </form>
+        </div>
+    )
+}
+
+export default ExpenseForm;
+
+-------------------
+
+import React from 'react'
+
+const Summary = ({income,expense,balance}) => {
+  return (
+    <div>
+      <h4>Summary</h4>
+      <h5>Income: {income}</h5>
+      <h5>Expense: {expense}</h5>
+      <h5>Balance: {balance}</h5>
+    </div>
+  )
+}
+
+export default Summary
+
+
+________________________
+
+18: DATE API 
+
+-------
+-----
+
+import React, { Component } from 'react';
+import API from './services/dateAPI';
+import DateButton from './components/DateButton';
+import DateDisplay from './components/DateDisplay';
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      apiResponse: ''
+    };
+  }
+
+  handleButtonClick = async () => {
+    const data = await API.getAPIResponse();
+    console.log(data);
+   
+    this.setState({
+      apiResponse: data
+    })
+
+
+  }
+
+  render() {
+    return (
+      <div>
+        <center><h1>Date API</h1></center>
+        <center><DateButton handleButtonClick={this.handleButtonClick}></DateButton></center>
+        <DateDisplay data={this.state.apiResponse} ></DateDisplay>
+      </div>
+    );
+  }
+}
+
+export default App;
+
+----------
+
+import React from 'react';
+import PropTypes from 'prop-types';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import { Paper } from '@mui/material';
+
+const DateDisplay = (({ data }) => {
+  const t= data?data.date:'10-09-2011';
+  const [m,d,y]= t.split('-').map(Number);
+  console.log(d,m,y);
+  
+
+  // console.log(day,month,year);
+  return <Paper className="container">
+    <List>
+      <ListItem>
+        <ListItemText data-testid="day">Day: {d}</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemText data-testid="month">Month: {m}</ListItemText>
+      </ListItem>
+      <ListItem>
+        <ListItemText data-testid="year">Year: {y}</ListItemText>
+      </ListItem>
+    </List>
+  </Paper>
+});
+
+DateDisplay.propTypes = {
+  apiResponse: PropTypes.string
+}
+
+export default DateDisplay;
+
+-----------
+
+import React from 'react';
+import PropTypes from 'prop-types';
+import Button from '@mui/material/Button';
+
+const DateButton = (({handleButtonClick}) => (
+  <div className="button-container">
+    <Button
+	  data-testid="date-button"
+      variant="contained"
+      onClick={handleButtonClick}
+      color="primary">
+      Display Date
+    </Button>
+  </div>
+));
+
+
+DateButton.propTypes = {
+    onClickButton: PropTypes.func
+}
+
+export default DateButton;
+
+--------------------------
+
+import axios from 'axios';
+const DATE_JSON_URL = 'https://jsonmock.hackerrank.com/datetime';
+
+export default {
+     getAPIResponse() {
+        return fetch(DATE_JSON_URL).then((response)=>response.json());
+    }
+};
+
+_______________________________________
+
+19: CUSTOMER LIST
+
+---------
+
+import React, { useState } from "react";
+import "./index.css";
+
+function CustomerList() {
+  const [input, setInput] = useState('');
+  const [data, setData] = useState([]);
+
+  const handleSubmit = () => {
+    if (input === '')
+      return;
+    setData([...data, input]);
+    setInput('');
+  }
+
+  return (
+    <div className="mt-75 layout-column justify-content-center align-items-center">
+      <section className="layout-row align-items-center justify-content-center">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          type="text"
+          className="large"
+          placeholder="Name"
+          data-testid="app-input" />
+        <button
+          onClick={handleSubmit}
+          type="submit"
+          className="ml-30"
+          data-testid="submit-button">Add Customer</button>
+      </section>
+
+      {data.length > 0 && <ul className="styled mt-50" data-testid="customer-list">
+        {data.map((item, index) => (
+          <li className="slide-up-fade-in" data-testid={`list-item${index}`} key={index} >{item}</li>
+        ))
+        }
+      </ul>}
+    </div>
+  );
+}
+
+export default CustomerList
+
+---------------
+
+20: CUSTOMER SEARCH
+
+____________________
+
+import React, { useEffect, useState } from 'react'
+import CustomerList from './CustomerList'
+import List from '../List';
+
+function SearchCustomer() {
+  const [filteredList, setFilteredList] = useState([]);
+  const [input, setInput] = useState("");
+  useEffect(()=>{
+    const filterCustomers = List.filter((customer) => {
+      return customer.name.startsWith(input) || customer.location.startsWith(input);
+    });
+    setFilteredList(filterCustomers);
+  },[input]);
+
+  return (
+    <>
+      <div className='layout-row align-items-center justify-content-center mt-30'>
+        <input
+          type='text'
+          className='large mx-20 w-20'
+          data-testid='search-input'
+          value={input}
+          placeholder='Enter search term (Eg: Phil)'
+          onChange={(e)=>setInput(e.target.value)}
+        />
+      </div>
+      <CustomerList customers={input===""?List:filteredList} />
+    </>
+  )
+}
+
+export default SearchCustomer
+
+
+____________________
+
+import React from 'react';
+
+function CustomerList({ customers }) {
+  console.log("length: "+customers.length);
+  return (
+    <div className='layout-column align-items-center justify-content-start'>
+      {customers.length === 0 ? (
+        <p data-testid='no-results'>No Results Found!</p>
+      ) : (
+        <div className='card w-40 pt-30 pb-8 mt-20'>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Location</th>
+                <th>Gender</th>
+                <th>Income</th>
+              </tr>
+            </thead>
+            <tbody data-testid='searched-customers'>
+              {customers.map((customer, index) => (
+                <tr key={index}>
+                  <td>{customer.name}</td>
+                  <td>{customer.age}</td>
+                  <td>{customer.location}</td>
+                  <td>{customer.gender}</td>
+                  <td>{customer.income}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default CustomerList;
+
+___________________
+
+21: CURRENCY CONVERTER 
+
+_____________
+
+import React, { useEffect, useState } from "react";
+import {
+  exchangeRates,
+  defaultCurrency,
+  defaultInput,
+} from "../../data/exchangeRates";
+import { preventNegative } from "../../utils/preventNegative";
+import "./styles.css";
+
+function CurrencyConvertor() {
+  const [selectedCurrency,setSelectedCurrency]=useState(defaultCurrency);
+  const [value, setValue]=useState(defaultInput);
+  const [exchangeRatesValue,setExchangeRateValue]=useState(0.012);
+
+
+  const handleExchange =(e)=>{
+       
+       setValue(e.target.value);
+  }
+
+  const calculateExchangeRate=()=>{
+       const curr=exchangeRates.find((c)=>c.currency===selectedCurrency)
+
+       const rate=curr.rate;
+
+       const finalExchangeRate=value*rate;
+
+       setExchangeRateValue(finalExchangeRate.toFixed(3));
+  }
+
+  const handleClear =(e)=>{
+     setSelectedCurrency(defaultCurrency);
+     setValue(defaultInput)
+  }
+
+  useEffect( ()=>{
+     calculateExchangeRate();
+  },[value,selectedCurrency])
+
+  return (
+    <div>
+      <div className="layout-row justify-content-space-evenly min-height mt-75">
+        <div className="layout-column w-35 pa-30 card">
+          <select className="mb-10" data-testid="select-currency" onChange={(e)=>setSelectedCurrency(e.target.value)}>
+           {
+              exchangeRates.map( (ex, index)=>(
+                     <option  key={index}>{ex.currency}</option>
+              ))
+           }
+          </select>
+          <input
+            className="h-50"
+            type="number"
+            value={value}
+            onKeyDown={(e)=>preventNegative(e)}
+            onChange={(e)=>handleExchange(e)}
+            placeholder={`Enter value in ${selectedCurrency}`}
+            data-testid="input-value"
+          />
+        </div>
+
+        <div className="layout-column w-35 pa-30 card">
+          <h3 className="mb-10 mt-0">USD</h3>
+          <input
+            className="h-50"
+            type="number"
+            value={exchangeRatesValue}
+            readOnly
+            data-testid="converted-value"
+            
+          />
+        </div>
+      </div>
+
+      <div className="layout-row justify-content-center pa-20">
+        <button data-testid="clear-values" onClick={handleClear}>Clear Input</button>
+      </div>
+    </div>
+  );
+}
+
+export default CurrencyConvertor;
+
+
+
+__________________
+
+22: COUNTRY LIST 
+
+-----
+
+import React, { useState } from 'react';
+import './App.css';
+import CountryList from './Components/CountryList';
+import Search from './Components/Search';
+import {response} from './response';
+import 'h8k-components';
+
+const title = "Country Filter";
+
+function App() {
+
+      const [input,setInput]=useState('');
+
+    return (
+        <div className="App">
+            <h8k-navbar header={title}></h8k-navbar>
+            <section className="w-30 justify-content-center layout-column mt-30 mx-auto">
+                <Search setInput={setInput}/>
+                <CountryList input={input} />
+            </section>
+        </div>
+    );
+}
+
+export default App;
+
+-------
+
+import React, { useState } from 'react'
+
+function Search({setInput}) {
+  
+      const handleSearch=(e)=>{
+          setInput(e.target.value);
+      }
+    return (
+      <input
+       data-testid="filterInput" 
+        className="large"
+        placeholder="Enter Country Name"
+        onChange={handleSearch}
+        />
+  	);
+}
+
+export default Search;
+
+-----
+
+import React, { useEffect, useState } from 'react';
+import { response } from '../response.js'
+function CountryList({ input }) {
+
+  const [filterdCountryList, setFilterdCountryList] = useState([]);
+
+  useEffect(() => {
+    const ans = response.filter((country) => {
+      return country.toLowerCase().includes(input.toLowerCase().trim());
+    });
+    setFilterdCountryList(ans)
+
+  }, [input]);
+
+
+  return (
+    <section>
+      <ul className="card country-list" data-testid="countryList">
+        {filterdCountryList?.map((country, index) => (<li key={index} className="pa-10 pl-20">{country}</li>))}
+      </ul>
+    </section>
+  );
+}
+
+export default CountryList;
+
+
+23: BIRTH-RECORDS
+
+__________________
+
+
+import React, { useState } from "react";
+import Radio from "./components/Radio";
+import Table from "./components/Table";
+import "h8k-components";
+
+const title = "Birthday Records";
+
+function App() {
+  const [parameter, setParameter] = useState("");
+
+  const handleSort = (option) => {
+    setParameter(option);
+  };
+
+  return (
+    <div>
+      <h8k-navbar header={title}></h8k-navbar>
+      <Radio sortBy={handleSort} selected={parameter} />
+      <Table parameter={parameter} />
+    </div>
+  );
+}
+
+export default App;
+
+_______________________
+
+import React from "react";
+
+const Radio = ({ sortBy, selected }) => {
+  return (
+    <div className="layout-row align-items-center justify-content-center mt-75">
+      <label htmlFor="sortBy">Sort By</label>
+
+      <input
+        type="radio"
+        id="nameRadio"
+        value="name"
+        name="sortBy"
+        data-testid="name"
+        title="Sort by name"
+        checked={selected === "name"}
+        onChange={(e) => sortBy(e.target.value)}
+      />
+      <label htmlFor="nameRadio" className="px-4">
+        Name
+      </label>
+
+      <input
+        type="radio"
+        id="ageRadio"
+        value="age"
+        name="sortBy"
+        data-testid="age"
+        title="Sort by age"
+        checked={selected === "age"}
+        onChange={(e) => sortBy(e.target.value)}
+      />
+      <label htmlFor="ageRadio" className="px-4">
+        Age
+      </label>
+    </div>
+  );
+};
+
+export default Radio;
+
+----------------
+
+import React from "react";
+
+const Table = ({ parameter }) => {
+  const people = [
+    { name: "Rhianna Johnson", birth: "11/30/2011" },
+    { name: "Aiden Shaw", birth: "09/16/1992" },
+    { name: "Trevon Floyd", birth: "01/16/1992" },
+    { name: "Melanie Yates", birth: "12/12/2001" },
+    { name: "Chris Andrews", birth: "02/09/1891" },
+    { name: "Jacinda Miller", birth: "12/01/1982" },
+    { name: "Will Davis", birth: "11/30/2011" },
+    { name: "Eliza Baxter", birth: "10/31/1999" },
+  ];
+
+  let sortedPeople = [...people];
+
+  if (parameter === "name") {
+    sortedPeople.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (parameter === "age") {
+    // older first => sort by ascending birthdate
+    sortedPeople.sort(
+      (a, b) => new Date(a.birth).getTime() - new Date(b.birth).getTime()
+    );
+  }
+
+  return (
+    <div className="table-div">
+      <div className="card w-50 mx-auto mt-20 pb-30">
+        <table data-testid="table">
+          <thead>
+            <tr>
+              <th className="course-name">Person Name</th>
+              <th className="duration">Date of Birth</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedPeople.map((person, index) => (
+              <tr key={index}>
+                <td>{person.name}</td>
+                <td>{person.birth}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default Table;
+
+________________________
+
+
+
+
+
+
+___________________________________________

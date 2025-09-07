@@ -1,0 +1,554 @@
+SQL SOLUTION:
+
+1) select distinct(user_id) as user_id, count(status) as failed_transactions, count(distinct(payment_method)) as distinctdistinct_payment_methods 
+ from transactions where status='failed' 
+  group by user_id having count(status)>5;
+
+2)// for sql:
+
+   SELECT
+    ROUND(AVG(TIMESTAMPDIFF(SECOND, STR_TO_DATE(created_at, '%Y-%m-%d %H:%i:%s'), STR_TO_DATE(resolved_at, '%Y-%m-%d %H:%i:%s')) / 3600), 2)
+   AS avg_response_time_hours
+   FROM support_tickets;
+
+  //for postgres
+   select ROUND(AVG(EXTRACT(EPOCH FROM (resolved_at::timestamp-created_at::timestamp))/3600),2) as avg_response_time_hours from support_tickets;
+
+
+3)SELECT //medium 
+    o.customer_id,
+	c.name,
+    c.city,
+    sum(o.amount) AS total_spending
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+where(o.amount) > 100
+and o.amount=(
+    select max(o2.amount) from 
+	orders o2 join 
+	customers c2 on o2.customer_id=c2.id
+	where c2.city=c.city
+);
+
+
+4)select p.name as product_name, count(r.product_id) from 
+ products p join requests r on p.id=r.product_id
+ where p.is_available=1
+ group by p.name
+ order by count(r.product_id) desc,
+ p.name asc;
+
+
+5)select c.name as campaign_name , count (e.campaign_id) as total_enagements, sum(e.views+e.clicks)
+from campaigns c join engagements e on c.id=e.campaign_id
+where c.is_active=1
+group by c.name 
+order by c.name asc;
+
+6)select a.email as email, ROUND(SUM(r.amount),2) as total_report_amount
+from accounts a join reports r on a.id=r.account_id
+where SUBSTRING(r.dt,1,4)='2023'
+group by a.email
+order by a.email asc
+
+7)select d.mac_address as mac_address , count(s.device_id)as total_files_scanned , sum(
+  case 
+   when s.is_infected=1
+   then 1
+   else 0
+   end) as total_infected_files
+  from devices d join scanned_files s on d.id=s.device_id
+  group by d.id, d.mac_address
+  order by d.mac_address asc;
+
+
+8) select c.name as coin_name, ROUND(sum(
+   case
+     when SUBSTRING(t1.dt,1,4)='2023'
+	 then t1.amount
+	 else 0
+	 end
+       ),2)as total_transaction_amount,sum(
+    case 
+	 when SUBSTRING(t1.dt,1,4)='2023'
+	 then 1
+	 else 0
+	 end
+       )as total_transactions
+     from coins c join transactions1 t1 on c.id=t1.coin_id
+     group by c.name 
+     order by c.name asc;
+
+
+9) select c1.email as email, count(d.customer_id) as total_domain 
+   from customers1 c1 join domains d on c1.id=d.customer_id 
+   group by c1.email
+   order by c1.email asc;
+
+10) select p1.name, ROUND(p1.price,2), sum(
+    case 
+    when p1.in_stock=1
+    then 1
+    else 0
+    end
+    )as total_whislist_count from 
+    products1 p1 join wishlists w on p1.id=w.product_id
+    where p1.in_stock=1
+    group by p1.name,p1.price
+    order by p1.name asc;
+
+
+11)  select c1.name as campaign_name ,sum(e.email_sent) as total_email_sent,sum(e.email_open) as total_email_open,
+     sum(e.email_sent-e.email_open) as total_email_not_opened 
+     from campaigns1 c1 join email_stats e on c1.id=e.campaign_id
+     group by c1.name
+     order by c1.name asc;
+
+12) select l.name as lot_name ,max(o.amount) as highest_offer, count(o.lot_id) as total_offers
+    from lots l join offers o on l.id=o.lot_id
+    group by l.name
+    order by l.name asc
+
+13)   select a1.iban as IBAN , min(t2.amount) as min_transaction, max(t2.amount)as max_transaction ,
+      ROUND(AVG(t2.amount),2 ) as avg_transaction, count(t2.account_id) as total_transactions 
+      from accounts1 a1 join transcations2 t2 on a1.id=t2.account_id
+      where SUBSTRING(t2.dt,6,2)='09'
+      group by a1.iban,a1.id
+      order by a1.id
+
+14)   select p4.name as name, p4.price as price, count(w2.product_id) as total_wishes
+      from prodcuts4 p4 join wishlists2 w2 on p4.id=w2.product_id
+      where p4.in_stock=1
+      group by p4.id, p4.name,p4.price
+      order by (count(w2.product_id))desc,
+      p4.name  asc
+      limit 3
+
+15 ) select c5.email as email,
+sum(
+   case 
+    when SUBSTRING (p.dt,6,2)='03'
+    then 1
+   else 0
+   end) as total_purchases,
+ROUND(sum(
+  case 
+    when SUBSTRING(p.dt,6,2)='03'
+	then p.amount
+	else 0
+	end
+),2)as total_purchase_amount from customers5 c5 join purchases p on c5.id=p.customer_id
+group by c5.email
+order by c5.email asc;
+
+16)  select a.email as email ,ap.dt as scheduled_appointment,
+ABS(ap.dt::date - DATE '2024-04-10') as days_of_delay // comparison between the two date 
+from applicants a join appointments ap on a.id=ap.applicant_id
+where ap.dt::date <  DATE '2024-04-10' and 
+ap.is_received=FALSE
+group by a.email,ap.dt
+order by
+ap.dt asc,
+a.email asc; 
+
+17) select a1.email as email , TO_CHAR(ap1.dt::timestamp    // this function helps to find the Day || we ca also use SELECT DAYNAME('2024-05-26 01:36:43') AS day_name in sql
+,'FMDay') as scheduled_appointment 
+from applicants1 a1 join appointments1 ap1 on a1.id=ap1.applicant_id
+where
+TO_CHAR(ap1.dt::timestamp,'FMDay') IN('Saturday','Sunday')
+group by 
+a1.email,ap1.dt
+order by a1.email asc;
+
+
+18)  select c.name as country_name,sum (
+  case 
+    when d1.is_active=TRUE
+	then 1
+	else 0
+	end
+)as total_domians
+from countries c join domains1 d1 on c.id=d1.country_id
+group by c.name 
+order by c.name asc
+
+
+19)select name ,('2024-04-10')as today_date,next_renewal_date, (next_renewal_date::date -DATE '2024-04-10') 
+as day_until_renewal from domains2 
+order by (next_renewal_date::date -DATE '2024-04-10')  asc,
+name asc
+
+20)select u.email as email, count(t.user_id) as total_transactions , ROUND(MIN(t.amount),2) as min_amount,
+ROUND(max(t.amount),2) as max_amount , ROUND(sum(t.amount),2) as total_amount
+from users5 u join transactions3 t on u.id=t.user_id
+where SUBSTRING(t.dt,6,2)='03'
+group by u.email
+order by u.email asc
+
+
+21)similar as 20
+
+22)select c.name as name,ROUND(avg(t.amount),2) as avg_transaction_amount from
+coins1 c join transactions2 t on c.id=t.coin_id
+where SUBSTRING(t.dt,1,4)='2023'
+group by c.name
+order by avg(t.amount)
+limit 3
+
+
+23)  select c.name as name, count(t.coin_id)as total_transactions,ROUND(min(t.amount),2) as min_amount,
+ROUND(max(t.amount),2)as max_amount,ROUND(avg(t.amount),2) as avg_amount
+from coins1 c join transactions2 t on c.id=t.coin_id
+where SUBSTRING(t.dt,1,4)='2023' and SUBSTRING (t.dt,6,2)='03'
+group by name
+order by count(t.coin_id) desc,
+name asc
+
+
+24)same concept
+
+25)same concept
+
+26)select c.email,ROUND(avg(s.cpu_usage),2) as average_cpu_usage,
+ROUND(avg(s.memory_usage),2) as average_memory_usage,
+ROUND(avg(s.disk_usage),2) as average_disk_usage
+from customers6 c join site_metrics s on c.id=s.customer_id
+group by c.email
+having 
+	ROUND(avg(s.cpu_usage),2)>50
+	or ROUND(avg(s.memory_usage),2)>50
+	or ROUND(avg(s.disk_usage),2)>50
+order by c.email asc
+
+27)select c.email as email , count(s.is_active)as total_active_sites
+from customers8 c left join sites s on c.id=s.customer_id and s.is_active='TRUE'
+group by c.email
+order by
+c.email asc
+
+
+28)select a.iban as iban, ROUND(avg(i.amount),2)as average_income,
+ROUND(sum(i.amount),2) as total_income
+from acc a left join income i on a.id=i.account_id and
+(i.dt)>='2024-01-01' and (i.dt)<='2024-03-31'
+group by a.id
+order by ROUND(AVG(i.amount),2)desc,
+a.id asc
+limit 3
+
+
+29)SELECT a.iban as iban , ROUND(sum(i.amount),2) as total_income,
+('20%')as tax_rate, ROUND(sum(i.amount)/5,2) as calculated_tax
+from acc1 a left join income1 i on a.id=i.account_id and SUBSTRING(i.dt,1,4)='2023'
+group by a.iban
+order by a.iban asc
+
+
+30) select c.email as email ,
+(
+   select ROUND(sum(e.amount),2) 
+   from expenses2 e
+   where e.customer_id=c.id
+   and SUBSTRING (e.dt,6,2)='03'
+) as total_expenses,
+
+(
+  select ROUND (sum(i.amount),2)
+  from income2 i
+  where i.customer_id=c.id
+  and SUBSTRING(i.dt,6,2)='03'
+)as total_income
+from customers3 c
+group  by c.email,c.id
+order by c.email asc
+
+32)select p.name as name, TO_CHAR(s.dt::timestamp,'FMMonth')as month ,
+ROUND(sum(s.amount),2) as total_sales
+from prod p left join sales s on p.id=s.product_id and EXTRACT (MONTH FROM s.dt::timestamp) in (1,2,3)
+group by p.name,EXTRACT (MONTH FROM s.dt::timestamp),TO_CHAR(s.dt::timestamp,'FMMonth')
+order by  
+EXTRACT(MONTH FROM s.dt::timestamp) ASC,
+sum(s.amount) desc;
+
+
+33)    select p.name as project_name ,count(pe.employee_id) as employee_count,
+ceil(avg(e.experience_years))as avg_experience_years , 
+case
+   when count(pe.employee_id)<5
+   then 'Yes'
+   else 'No'
+   end
+as is_understaffed 
+from  projects p
+join project_employees pe on p.id=pe.project_id 
+join employee1 e on e.id=pe.employee_id
+group by p.name
+having 
+ceil(avg(e.experience_years))>2
+order by 
+employee_count desc,
+p.name asc;
+
+
+34)  select wallet, count(wallet) as total_transactions, ROUND(sum (
+case 
+  when amount>0
+  then amount
+  else 0
+  end 
+),2)as total_bought , ROUND(sum(
+    case
+	 when amount<0
+	 then abs(amount)
+	 else 0
+	 end
+	),2)as total_sold from transaction5
+	where SUBSTRING(dt,6,2)='02'
+	group by wallet
+	order by wallet asc
+
+35)select e.email as email ,sum(l.days_taken),
+case 
+when sum(l.days_taken)<=20
+then 'Within Limit'
+else  'Exceeded'
+end as leave_status  from employees7 e 
+left join leave_records l on e.id=l.employee_id and SUBSTRING(leave_dt,1,4)='2023'
+group by e.email
+order by e.email asc
+
+36)select c.name as name ,sum(e.emails_sent) as total_emails_sent,
+sum(e.emails_opened) as total_emails_opened,
+ROUND ( (SUM(e.emails_opened)::DECIMAL/ SUM(e.emails_sent))*100,2) as open_rate
+from campaigns2 c  left join email_stats1 e
+on c.id=e.campaign_id
+group by c.name
+having ROUND ( (SUM(e.emails_opened)::DECIMAL/ SUM(e.emails_sent))*100,2)>50
+order by open_rate desc,
+c.name asc
+
+
+37)
+select b.name as name ,COUNT(m.maturity) as maturity_dates,
+MIN(m.maturity) as earliest_date, MAX(m.maturity) as latest_date,
+CEIL(AVG(m.maturity::DATE-'2023-09-13'::DATE)) as avg_days_to_maturity
+from bonds b join maturities m on b.id=m.bond_id
+group by b.name
+having CEIL(AVG(m.maturity::DATE-'2023-09-13'::DATE))>365
+order by b.name asc
+
+
+38)select b.name as name , count(i.rate) as interest_rates,
+min(i.rate) as lowest_rate,max(i.rate) as highest_rate,
+ROUND(avg(i.rate),2) as avg_rate from bonds1 b join interest_rates i
+on b.id=i.bond_id
+group by b.name
+having round(avg(i.rate),2)>3.00
+ORDER BY b.name asc
+
+
+39)
+select bo.name as name,SUM(ROUND((b.annual_coupon*b.coupon_remaining),2)) as total_cash_flow
+from bondholders bo join  bondholders_bonds bb on bo.id=bb.bondholder_id
+join bonds2 b on b.id=bb.bond_id
+group by bo.name
+having SUM(ROUND((b.annual_coupon*b.coupon_remaining),2))>10000.00
+order by total_cash_flow DESC;
+
+
+41)
+select i.email as email, count(c.investors_id) as investment_count,
+sum(c.expected_flow) as total_expected_flow ,(max(c.expected_flow)-min(c.expected_flow)) as range_exprected_flow from 
+investors i join cash_flows c on i.id=c.investors_id
+group by i.email
+having sum(c.expected_flow)>100000
+order by i.email asc;
+
+42)select c.coupon_code as coupon_code, c.description as description ,
+count(co.coupon_id) as total_uses , min(co.amount) as min_discount,
+max(co.amount) as max_discount , ROUND(avg(co.amount),2) as avg_discount
+from coupons c join coupon_uses co on c.id=co.coupon_id and c.is_enabled=1
+group by c.coupon_code,c.description
+order by c.coupon_code asc
+
+43)select p.title as title,count(pr.freelancers_id) as total_projects,
+ROUND(sum(pr.income),2) as total_income,
+DISTINCT(count(pr.freelancer_id)) as total_freelancers,
+ROUND(avg(pr.income),2) as average_income_per_freelancers
+from professions p join freelancers f on p.id=f.profession_id
+join projects1 pr on f.id=pr.freelancers_id
+group by p.title,pr.status
+having pr.status='Completed'
+order by total_income desc
+
+44)
+select c.title as category,p.title as title,
+sum(p.stock_number) as total_stock
+from categories2 c join products2 p on c.id=p.category_id
+group by c.title,p.title
+having sum(p.stock_number)>10
+order by c.title asc,
+p.title asc,
+total_stock desc
+
+
+46) select c.mac_address as mac_address ,
+count(*) as streams,
+sum(s.traffic) as total_traffic
+from clients3 c join streams s on
+c.id=s.client_id
+where s.quality in ('720p','1080p','1440p','2160p')
+group by c.mac_address
+order by total_traffic desc;
+
+
+47)SELECT //medium
+  n.cidr,
+  COUNT(*) AS total_instances,
+  CEIL(AVG(REPLACE(i.cpu_usage, '%', '')::INTEGER)) || '%' AS avg_cpu_usage,
+  CEIL(AVG(REPLACE(i.memory_usage, '%', '')::INTEGER)) || '%' AS avg_memory_usage,
+  CEIL(AVG(REPLACE(i.network_usage, '%', '')::INTEGER)) || '%' AS avg_network_usage
+FROM networks n
+JOIN instances i ON n.id = i.network_id
+WHERE n.id IN (
+  SELECT DISTINCT network_id
+  FROM instances
+  WHERE REPLACE(cpu_usage, '%', '')::INTEGER >= 80
+)
+GROUP BY  n.cidr
+ORDER BY n.cidr asc;
+
+
+
+/** important concepts
+   
+SELECT 
+  task_id,
+  start_dt,
+  end_dt,
+  EXTRACT(EPOCH FROM end_dt - start_dt) AS total_seconds,
+  FLOOR(EXTRACT(EPOCH FROM end_dt - start_dt) / 60) AS minutes,
+  MOD(EXTRACT(EPOCH FROM end_dt - start_dt), 60) AS seconds
+FROM processes;
+
+**/ 
+
+48)select t.hash as hash ,ROUND(SUM(EXTRACT(EPOCH FROM (p.end_dt::timestamp-p.start_dt::timestamp)))) as usage_time
+from tasks t join  process p on
+t.id=p.task_id
+group by hash
+order by usage_time desc 
+
+49)select 
+'Device '|| id || ' has class: ' ||(
+   case 
+   when score>=80
+   then 'A'
+   when score>=60 and score <80
+   then 'B'
+   when score >=40 and score <60
+   then 'C'
+   when score >=20 and score <40
+   then 'D'
+   else
+   'F'
+   end) as device 
+   from devices1
+
+98)select customer, ROUND((SUM(debit)-sum(credit)),2) as balance from 
+transactions4 where SUBSTRING(dt,6,2) ='12'
+group by customer 
+order by customer asc
+
+97)  select name from emp2 
+  group by name 
+  having count(phone)>1 and count(age)>1
+
+96)SELECT DISTINCT (SCORE) 
+FROM STUDENS1
+GROUP BY SCORE
+ORDER BY SCORE DESC
+OFFSET 3 LIMIT 1
+
+95)select s.student_name as student_name, m.major_name as branch
+from students2 s join register r on s.student_id=r.student_id
+join majors m on r.major_id=m.major_id
+group by s.student_id,m.major_name
+order by s.student_id asc
+
+94)select p.name ,p.salary from
+professor p join department5 d on p.department_id=d.id
+where d.name!='Arts and Humanities' and p.salary > (
+    select min(p.salary) from professor p where p.department_id=4
+)
+group by p.name,p.salary,p.id
+order by p.id
+
+
+93)   select distinct 
+p.name , c.name 
+from professor1 p 
+join schedule s on s.professor_id=p.id
+join course c on c.id=s.course_id
+
+
+92)select 
+p.name, c.name 
+from professor2 p
+join schedule1 s on s.professor_id=p.id
+join course2 c on c.id =s.course_id
+
+91)select 
+c.name 
+from company c
+join salary1 s on s.company_id=c.id
+group by c.id
+having avg(s.salary)>40000
+order by  c.id asc
+
+90)select(
+   case 
+   when (red)=(green) and (green)=(blue)
+   then 'GOOD' 
+   WHEN  (RED)=(GREEN) OR (RED)=(BLUE) OR (GREEN)=(BLUE)
+   THEN 'BAD' 
+   else 
+    'WORSE'
+	END) FROM COLLECTION
+
+89)SELECT ID , NAME FROM 
+CUSTOMER4 
+WHERE COUNTRY='USA' and  CREDIT>100000
+ORDER BY ID ASC
+
+88)select id , order_date, status ,customer_id
+from orders3
+group by id, order_date,status,customer_id 
+having status!='DELIVERED'
+ORDER BY ID ASC,
+order_date asc
+limit 5
+
+87)SELECT ID , NAME 
+FROM STUDENT 
+group by id, name
+having SCORE> (
+select avg(score) from student )
+order by id asc
+
+86)select id, concat(first_name, ' ', last_name)
+from customer9
+where length(concat(first_name, ' ', last_name))<13
+group by id
+order by length(concat(first_name, ' ', last_name))asc,
+first_name asc
+
+
+85)select s.id , e.subject, count(e.student_id)
+from student4 s join examination e on s.id=e.student_id
+group by s.id, e.subject
+order by s.id
+
+
+84)
+
