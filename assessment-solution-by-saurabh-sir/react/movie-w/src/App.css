@@ -1,0 +1,69 @@
+.movies-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.movie-card {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 5px;
+  width: 200px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.movie-card h3 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+
+.watchlist {
+  list-style: none;
+  padding: 0;
+}
+
+.watchlist li {
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.watchlist button {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.watchlist button:hover {
+  background-color: #a71d2a;
+}
+
+button {
+  font-size: 14px;
+}
+
+.movie-card button {
+  font-size: 14px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.movie-card button:hover {
+  opacity: 0.9;
+}
+
+.movie-card .remove-button {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.movie-card .remove-button:hover {
+  background-color: #a71d2a;
+}

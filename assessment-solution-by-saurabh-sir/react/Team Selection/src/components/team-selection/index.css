@@ -1,0 +1,16 @@
+.table-wrapper{
+	display: flex;
+	width: 80%;
+}
+
+
+.card-wrapper{
+		width: 50%;
+			margin-right: 10px;
+			overflow: scroll;
+			height: 80vh;
+}
+
+.text-center-div{
+	text-align: center;
+}

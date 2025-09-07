@@ -1,0 +1,104 @@
+[
+    {
+        "name": "Rohit Sharma",
+        "type": "Batsman",
+        "battingSkill": 90,
+        "bowlingSkill": 90
+    },
+    {
+        "name":"Virat Kohli",
+        "type": "Batsman",
+        "battingSkill": 90,
+        "bowlingSkill": 70
+    },
+    {
+        "name":"Shikhar Dhawan",
+        "type": "Batsman",
+        "battingSkill": 85,
+        "bowlingSkill": 50
+    },
+    {
+        "name": "Shreyas Iyer",
+        "type": "Batsman",
+        "battingSkill": 87,
+        "bowlingSkill": 40
+    },
+    {
+        "name":"Mayank Agarwal",
+        "type": "Batsman",
+        "battingSkill": 90,
+        "bowlingSkill": 40
+    },
+    {
+        "name":"Ajinkya Rahane",
+        "type": "Batsman",
+        "battingSkill": 84,
+        "bowlingSkill": 45
+    },
+    {
+        "name":"Rishabh Pant",
+        "type":"WicketKeeper",
+        "battingSkill": 90,
+        "bowlingSkill": 20
+    },
+    {
+        "name":"KL Rahul",
+        "type":"WicketKeeper",
+        "battingSkill": 89,
+        "bowlingSkill": 20
+    },
+    {
+        "name":"Ishaan Kishan",
+        "type":"WicketKeeper",
+        "battingSkill": 84,
+        "bowlingSkill": 30
+    },
+    {
+        "name":"Ravindra Jadeja",
+        "type":"AllRounder",
+        "battingSkill": 90,
+        "bowlingSkill": 80
+    },
+    {
+        "name":"Hardik Pandya",
+        "type":"AllRounder",
+        "battingSkill": 80,
+        "bowlingSkill": 70
+    },
+    {
+        "name":"Ravichandran Ashwin",
+        "type":"AllRounder",
+        "battingSkill": 70,
+        "bowlingSkill": 90
+    },
+    {
+        "name":"Shivam Dube",
+        "type":"AllRounder",
+        "battingSkill": 80,
+        "bowlingSkill": 80
+    },
+    {
+        "name":"Jasprit Bumrah",
+        "type":"Bowler",
+        "battingSkill": 50,
+        "bowlingSkill": 90
+    },
+    {
+        "name":"Kuldeep Yadav",
+        "type":"Bowler",
+        "battingSkill": 50,
+        "bowlingSkill": 85
+    },
+    {
+        "name":"Navdeep Saini",
+        "type":"Bowler",
+        "battingSkill": 60,
+        "bowlingSkill": 85
+    },
+    {
+        "name":"Shardul Thakur",
+        "type":"Bowler",
+        "battingSkill": 70,
+        "bowlingSkill": 85
+    }
+]

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="8" failures="0" errors="0" time="3.547">
+  <testsuite name="React Edit Profile" errors="0" failures="0" skipped="0" timestamp="2025-09-07T05:21:44" time="1.993" tests="8">
+    <testcase classname="React Edit Profile should initially have 3 divs with the specified values" name="React Edit Profile should initially have 3 divs with the specified values" time="0.03">
+    </testcase>
+    <testcase classname="React Edit Profile should initially have no input fields" name="React Edit Profile should initially have no input fields" time="0.006">
+    </testcase>
+    <testcase classname="React Edit Profile after initial button click button should have the text Save Changes after click" name="React Edit Profile after initial button click button should have the text Save Changes after click" time="0.015">
+    </testcase>
+    <testcase classname="React Edit Profile after initial button click should display input fields" name="React Edit Profile after initial button click should display input fields" time="0.008">
+    </testcase>
+    <testcase classname="React Edit Profile after initial button click should not display the 3 divs" name="React Edit Profile after initial button click should not display the 3 divs" time="0.008">
+    </testcase>
+    <testcase classname="React Edit Profile values after editing should have the correct input details after editing" name="React Edit Profile values after editing should have the correct input details after editing" time="0.016">
+    </testcase>
+    <testcase classname="React Edit Profile values after editing button should have the text Edit Profile" name="React Edit Profile values after editing button should have the text Edit Profile" time="0.003">
+    </testcase>
+    <testcase classname="React Edit Profile values after editing should not update any field and should alert if any input field is empty" name="React Edit Profile values after editing should not update any field and should alert if any input field is empty" time="0.011">
+    </testcase>
+  </testsuite>
+</testsuites>
