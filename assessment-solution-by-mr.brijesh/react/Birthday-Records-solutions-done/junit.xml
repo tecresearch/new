@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="5" failures="0" errors="0" time="3.419">
+  <testsuite name="Birthday Records" errors="0" failures="0" skipped="0" timestamp="2025-09-07T11:27:55" time="2.031" tests="5">
+    <testcase classname="Birthday Records check if radio &apos;name&apos; and &apos;age&apos; are switched when clicked" name="Birthday Records check if radio &apos;name&apos; and &apos;age&apos; are switched when clicked" time="0.061">
+    </testcase>
+    <testcase classname="Birthday Records check if number of table rows are rendered" name="Birthday Records check if number of table rows are rendered" time="0.006">
+    </testcase>
+    <testcase classname="Birthday Records check if random rows not sorted originally" name="Birthday Records check if random rows not sorted originally" time="0.007">
+    </testcase>
+    <testcase classname="Birthday Records check if random rows sorted by name when radio &apos;name&apos; is clicked" name="Birthday Records check if random rows sorted by name when radio &apos;name&apos; is clicked" time="0.008">
+    </testcase>
+    <testcase classname="Birthday Records check if random rows sorted by age when radio &apos;age&apos; is clicked" name="Birthday Records check if random rows sorted by age when radio &apos;age&apos; is clicked" time="0.008">
+    </testcase>
+  </testsuite>
+</testsuites>
